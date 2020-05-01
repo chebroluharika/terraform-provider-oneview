@@ -19,21 +19,15 @@ import (
 
 func resourceHypervisorClusterProfile() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceHypervisorClusterProfileCreate,
-		Read:   resourceHypervisorClusterProfileRead,
-		Update: resourceHypervisorClusterProfileUpdate,
-		Delete: resourceHypervisorClusterProfileDelete,
-		Importer: &schema.ResourceImporter{
-			State: schema.ImportStatePassthrough,
-		},
+		Read: datasourceHypervisorClusterProfileRead,
 
 		Schema: map[string]*schema.Schema{
 			"add_host_requests": {
 				Type:     schema.TypeSet,
 				Computed: true,
 				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
+					Type: schema.TypeString},
+				Set: schema.HashString,
 			},
 
 			"category": {
@@ -84,7 +78,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 							Computed: true,
 						},
 
-						"mulit_nic_v_motion": {
+						"multi_nic_v_motion": {
 							Type:     schema.TypeBool,
 							Computed: true,
 						},
@@ -110,15 +104,15 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true},
 						"deployment_plan": {
-							Type:     schema.TypeSet,
+							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"deployment_custom_args": {
-									        Type:     schema.TypeSet,
+										Type:     schema.TypeList,
+										Computed: true,
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
-										        Computed: true,
 										},
 									},
 									"deployment_plan_description": {
@@ -135,7 +129,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Computed: true},
 								}}},
 						"host_config_policy": {
-							Type:     schema.TypeSet,
+							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -156,7 +150,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true},
 						"virtual_switch_config_policy": {
-							Type:     schema.TypeSet,
+							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -172,7 +166,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Computed: true},
 								}}},
 						"virtual_switches": {
-							Type:     schema.TypeSet,
+							Type:     schema.TypeList,
 							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -182,8 +176,8 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 									"name": {
 										Type:     schema.TypeString,
 										Computed: true},
-									"newtwork_uris": {
-										Type:     schema.TypeSet,
+									"network_uris": {
+										Type:     schema.TypeList,
 										Computed: true,
 										Elem: &schema.Schema{
 											Type: schema.TypeString},
@@ -192,7 +186,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true},
 									"virtual_switch_port_groups": {
-										Type:     schema.TypeSet,
+										Type:     schema.TypeList,
 										Computed: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
@@ -202,14 +196,14 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 												"name": {
 													Type:     schema.TypeString,
 													Computed: true},
-												"newtwork_uris": {
-													Type:     schema.TypeSet,
+												"network_uris": {
+													Type:     schema.TypeList,
 													Computed: true,
 													Elem: &schema.Schema{
 														Type: schema.TypeString},
 												},
 												"virtual_switch_ports": {
-													Type:     schema.TypeSet,
+													Type:     schema.TypeList,
 													Computed: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
@@ -222,11 +216,11 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 															"ip_address": {
 																Type:     schema.TypeString,
 																Computed: true},
-															"subnet_mast": {
+															"subnet_mask": {
 																Type:     schema.TypeString,
 																Computed: true},
 															"virtual_port_purpose": {
-																Type:     schema.TypeSet,
+																Type:     schema.TypeList,
 																Computed: true,
 																Elem: &schema.Schema{
 																	Type: schema.TypeString},
@@ -242,7 +236,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Type:     schema.TypeString,
 										Computed: true},
 									"virtual_switch_uplinks": {
-										Type:     schema.TypeSet,
+										Type:     schema.TypeList,
 										Computed: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
@@ -268,7 +262,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 							}},
 					}}},
 			"hypervisor_cluster_uri": {
-				Type: schema.TypeString,
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 
@@ -288,8 +282,11 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 			},
 
 			"ip_pools": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeSet,
 				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString},
+				Set: schema.HashString,
 			},
 
 			"mgmt_ip_settings_override": {
@@ -323,8 +320,11 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 			},
 
 			"shared_storage_volumes": {
-				Type:     schema.TypeString,
+				Type:     schema.TypeSet,
 				Computed: true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString},
+				Set: schema.HashString,
 			},
 
 			"state": {
@@ -349,16 +349,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 
 			"uri": {
 				Type:     schema.TypeString,
-				Computed: true,
-			},
-
-			"initial_scope_uris": {
 				Optional: true,
-				Type:     schema.TypeSet,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Set: schema.HashString,
 			},
 		},
 	}
@@ -368,25 +359,57 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	config := meta.(*Config)
 
 	hypCP := ov.HypervisorClusterProfile{
-		Name:                 d.Get("name").(string),
-		Description:          d.Get("description").(string),
-		HypervisorType:       d.Get("hypervisor_type").(string),
-		HypervisorManagerUri: d.Get("password").(string),
-		Path:                 d.Get("path").(int),
-		Type:                 d.Get("type").(string),
-		HypervisorHostProfileTemplate: {
-			ServerProfileTeamplateUri: d.Get("server_profile_template_uri").(string),
-			HostPrefix:                d.Get("host_prefix"),
-		},
+		AddHostRequests: d.Get("add_host_requests").(string),
+		Category:        d.Get("category").(string),
+		ComplianceState: d.Get("compliance_state").(string),
+		Created:         d.Get("created").(string),
+		Description:     d.Get("description").(string),
+		ETag:            d.Get("e_tag").(string),
+		//HypervisorClusterSettings:     d.Get("hypervisor_cluster_settings").(string),
+		HypervisorClusterUri: d.Get("hypervisor_cluster_uri").(string),
+		//HypervisorHostProfileTemplate: d.Get("hypervisor_host_profile_template").(string),
+		HypervisorHostProfileUris: d.Get("hypervisor_host_profile_uris").(string),
+		HypervisorManagerUri:      d.Get("hypervisor_manager_uri").(string),
+		HypervisorType:            d.Get("hypervisor_type").(string),
+		IpPools:                   d.Get("ip_pools").(string),
+		MgmtIpSettingsOverride:    d.Get("mgmt_ip_settings_override").(string),
+		Modified:                  d.Get("modified").(string),
+		Name:                      d.Get("name").(string),
+		Path:                      d.Get("path").(string),
+		RefreshState:              d.Get("refresh_state").(string),
+		ScopesUri:                 d.Get("scopes_uri").(string),
+		SharedStorageVolumes:      d.Get("shared_storage_volumes").(string),
+		State:                     d.Get("state").(string),
+		StateReason:               d.Get("state_reason").(string),
+		Status:                    d.Get("status").(string),
+		Type:                      d.Get("type").(string),
+		Uri:                       d.Get("uri").(string),
 	}
-
-	if val, ok := d.GetOk("initial_scope_uris"); ok {
-		rawInitialScopeUris := val.(*schema.Set).List()
-		initialScopeUris := make([]utils.Nstring, len(rawInitialScopeUris))
-		for i, raw := range rawInitialScopeUris {
-			initialScopeUris[i] = utils.Nstring(raw.(string))
+	HypervisorClusterSettingslist := d.Get("hypervisor_cluster_settings").(*schema.Set).List()
+	for _, raw := range HypervisorClusterSettingslist {
+		hypervisorClusterSettings := raw.(map[string]interface{})
+	
+		hypClusterSettings := ov.HypervisorClusterSettings{
+			DistributedSwitchUsage:   hypervisorClusterSettings["distributed_switch_usage"].(string),
+			DistributedSwitchVersion: hypervisorClusterSettings["distributed_switch_version"].(bool),
+			DrsEnabled:               hypervisorClusterSettings["drs_enabled"].(bool),
+			HaEnabled:                hypervisorClusterSettings["ha_enabled"].(string),
+			MultiNicVMotion:          hypervisorClusterSettings["multi_nic_v_motion"].(string),
+			Type:                     hypervisorClusterSettings["type"].(string),
+			VirtualSwitchType:        hypervisorClusterSettings["virtual_switch_type"].(string),
 		}
-		hypCP.InitialScopeUris = initialScopeUris
+		hypCP.HypervisorClusterSettings = &hypClusterSettings
+	}
+	HypervisorHostProfileTemplateList := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
+	for _, raw := range HypervisorHostProfileTemplateList {
+		deploymentplanlist := HypervisorHostProfileTemplateList.Get("deployment_plan")
+		hostprofiletemplate := raw.(map[string]interface{})
+		hypHostProfileTemplate := ov.HypervisorHostProfileTemplate{
+			DeploymentManagerType:    hostprofiletemplate["deployment_manager_type"].(string),
+			Hostprefix:               hostprofiletemplate["host_prefix"].(string),
+			ServerProfileTemplateUri:  utils.Nstring(hostprofiletemplate["server_profile_template_uri"].(string)),
+		}
+		servC.HypervisorHostProfileTemplate = &hypHostProfileTemplate
 	}
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
 	d.SetId(d.Get("name").(string))
@@ -398,72 +421,8 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
 
-	hypCP, err := config.ovClient.GetHypervisorClusterProfile(d.Id())
-	if err != nil || hypCP.URI.IsNil() {
-		d.SetId("")
-		return nil
-	}
-	d.Set("add_host_requests", hypCP.AddHostRequests)
-	d.Set("category", hypCP.Category)
-	d.Set("compliance_state", hypCP.ComplianceState)
-	d.Set("created", hypCP.Created)
-	d.Set("description", hypCP.Description)
-	d.Set("e_tag", hypCP.ETag)
-	hypCPCS_list := make([]map[string]interface{}, 0, 1)
-	hypCPCS_list = append(hypCPCS_list, map[string]interface{}{
-		"type":                       hypCP.HypervisorClusterSettings.DistributedSwitchUsage,
-		"virtual_switch_type":        hypCP.HypervisorClusterSettings.DistributedSwitchVersion,
-		"distributed_switch_version": hypCP.HypervisorClusterSettings.DistributedSwitchVersion,
-		"distributed_switch_usage":   hypCP.HypervisorClusterSettings.DistributedSwitchUsage,
-		"multi_nic_v_motion":         hypCP.HypervisorClusterSettings.MultiNicVMotion,
-		"drs_enabled":                hypCP.HypervisorClusterSettings.DrsEnabled,
-		"ha_enabled":                 hypCP.HypervisorClusterSettings.HaEnabled,
-	})
-
-	d.Set("hypervisor_cluster_settings", hypCPCS_list)
-	d.Set("hypervisor_cluster_uri", hypCP.HypervisorClusterUri)
-	dp_list := make([]map[string]interface{}, 0, 1)
-	dp_list = append(dp_list, map[string]interface{}{
-		
-		"deployment_custom_args":      hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs,
-		"deployment_plan_description": hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentPlanDescription,
-		"deployment_plan_uri":         hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentPlanUri.string(),
-		"name":                        hypCP.HypervisorHostProfileTemplate.DeploymentPlan.Name,
-		"server_password":             hypCP.HypervisorHostProfileTemplate.DeploymentPlan.ServerPassword,
-	})
-	hypCPHHPT_list := make([]map[string]interface{}, 0, 1)
-	hypCPHHPT_list = append(hypCPHHPT_list, map[string]interface{}{
-		"deployment_manager_type":      hypCP.HypervisorHostProfileTemplate.DeploymentManagerType,
-		"deployment_plan":              dp_list,
-		"host_config_policy":           hypCP.HypervisorHostProfileTemplate.HostConfigPolicy,
-		"host_prefix":                  hypCP.HypervisorHostProfileTemplate.Hostprefix,
-		"server_profile_template_uri":  hypCP.HypervisorHostProfileTemplate.ServerProfileTemplateUri.string(),
-		"virtual_switch_config_policy": hypCP.HypervisorHostProfileTemplate.VirtualSwitchConfigPolicy,
-		"virtual_switches":             hypCP.HypervisorHostProfileTemplate.VirtualSwitches,
-	})
-	d.Set("hypervisor_host_profile_template", hypCP.HypervisorHostProfileTemplate)
-	d.Set("hypervisor_host_profile_uris", hypCP.HypervisorHostProfileUris)
-	d.Set("hypervisor_manager_uri", hypCP.HypervisorManagerUri)
-	d.Set("hypervisor_type", hypCP.HypervisorType)
-	d.Set("ip_pools", hypCP.IpPools)
-	d.Set("mgmt_ip_settings_override", hypCP.MgmtIpSettingsOverride)
-	d.Set("modified", hypCP.Modified)
-	d.Set("name", hypCP.Name)
-	d.Set("path", hypCP.Path)
-	d.Set("refresh_state", hypCP.RefreshState)
-	d.Set("scopes_uri", hypCP.ScopesUri)
-	d.Set("shared_storage_volumes", hypCP.SharedStorageVolumes)
-	d.Set("state", hypCP.State)
-	d.Set("state_reason", hypCP.StateReason)
-	d.Set("status", hypCP.Status)
-	d.Set("type", hypCP.Type)
-	d.Set("uri", hypCP.Uri)
-	d.Set("initial_scope_uris", hypCP.InitialScopeUris)
-	return nil
 }
-
 func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
