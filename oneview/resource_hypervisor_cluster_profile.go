@@ -388,7 +388,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	HypervisorClusterSettingslist := d.Get("hypervisor_cluster_settings").(*schema.Set).List()
 	for _, raw := range HypervisorClusterSettingslist {
 		hypervisorClusterSettings := raw.(map[string]interface{})
-	
+
 		hypClusterSettings := ov.HypervisorClusterSettings{
 			DistributedSwitchUsage:   hypervisorClusterSettings["distributed_switch_usage"].(string),
 			DistributedSwitchVersion: hypervisorClusterSettings["distributed_switch_version"].(bool),
@@ -402,12 +402,25 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	}
 	HypervisorHostProfileTemplateList := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
 	for _, raw := range HypervisorHostProfileTemplateList {
-		deploymentplanlist := HypervisorHostProfileTemplateList.Get("deployment_plan")
+		deploymentplanlist := HypervisorHostProfileTemplateList.Get("deployment_plan").(*schema.Set).List()
+		for _, dp_raw := range deploymentplanlist {
+			deploymentPlan := raw(map[string]interface{})
+			hptdeploymentplan := HypervisorHostProfileTemplateList.DeploymentPlan{
+				DeploymentCustomArgs:      deploymentPlan["deployment_custom_args"].(string),
+				DeploymentPlanDescription: deploymentPlan["deployment_plan_description"].(string),
+				DeploymentPlanUri:         utils.Nstring(deploymentPlan["deployment_plan_uri"].(string)),
+				Name:                      deploymentPlan["name"].(string),
+				ServerPassword:            deploymentPlan["server_password"].(string),
+			}
+
+		}
+
 		hostprofiletemplate := raw.(map[string]interface{})
 		hypHostProfileTemplate := ov.HypervisorHostProfileTemplate{
 			DeploymentManagerType:    hostprofiletemplate["deployment_manager_type"].(string),
+			DeploymentPlan:           &hptdeploymentplan,
 			Hostprefix:               hostprofiletemplate["host_prefix"].(string),
-			ServerProfileTemplateUri:  utils.Nstring(hostprofiletemplate["server_profile_template_uri"].(string)),
+			ServerProfileTemplateUri: utils.Nstring(hostprofiletemplate["server_profile_template_uri"].(string)),
 		}
 		servC.HypervisorHostProfileTemplate = &hypHostProfileTemplate
 	}
