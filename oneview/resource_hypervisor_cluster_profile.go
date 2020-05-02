@@ -17,7 +17,7 @@ import (
 	"github.com/HewlettPackard/oneview-golang/utils"
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
-	//	"path"
+	"path"
 )
 
 func resourceHypervisorClusterProfile() *schema.Resource {
@@ -416,6 +416,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		/******************* deployment plan start********************/
 		rawHostProfileTemplateItem := raw.(map[string]interface{})
 		deploymentPlan := ov.DeploymentPlan{}
+		virtualSwitchConfigPolicy := ov.VirtualSwitchConfigPolicy{}
 		rawDeploymentPlan := rawHostProfileTemplateItem["deployment_plan"].(*schema.Set).List()
 		for _, raw2 := range rawDeploymentPlan {
 			rawDeploymentPlanItem := raw2.(map[string]interface{})
@@ -442,15 +443,15 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		/*****************switch config policy**************************/
 		rawVirtualSwitchConfigPolicy := rawHostProfileTemplateItem["virtual_switch_config_policy"].(*schema.Set).List()
 
-		for _, raw3 := range rawSwitchConfigPolicy {
+		for _, raw3 := range rawVirtualSwitchConfigPolicy {
 			rawVirtualSwitchConfigPolicyItem := raw3.(map[string]interface{})
 
-			virtualswitchConfigPolicy = ov.VirtualSwitchConfigPolicy{
+			virtualSwitchConfigPolicy = ov.VirtualSwitchConfigPolicy{
 				ConfigurePortGroups:   rawVirtualSwitchConfigPolicyItem["configure_port_group"].(bool),
 				CustomVirtualSwitches: rawVirtualSwitchConfigPolicyItem["custom_virtual_switches"].(bool),
-				ManageVirtualSwitches: rawDeploymentPlanItem["manage_virtual_switches"].(bool),
+				ManageVirtualSwitches: rawVirtualSwitchConfigPolicyItem["manage_virtual_switches"].(bool),
 			}
-			file, _ := json.MarshalIndent(virtualswitchConfigPolicy, "", " ")
+			file, _ := json.MarshalIndent(virtualSwitchConfigPolicy, "", " ")
 			_ = ioutil.WriteFile("vscp.json", file, 0644)
 		}
 
@@ -460,7 +461,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			DeploymentPlan:           &deploymentPlan,
 			Hostprefix:               rawHostProfileTemplateItem["host_prefix"].(string),
 			ServerProfileTemplateUri: utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
-			VirtualSwitchConfigPolicy : &virtualswitchConfigPolicy,
+			VirtualSwitchConfigPolicy : &virtualSwitchConfigPolicy,
 		}
 		file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
 		_ = ioutil.WriteFile("hpt1.json", file1, 0644)
@@ -470,9 +471,9 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	file0, _ := json.MarshalIndent(hypCP, "", " ")
 	_ = ioutil.WriteFile("hpycp.json", file0, 0644)
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
-	//uri := d.Get("URI").(string)
-	//_, id := path.Split(uri)
-	//d.SetId(id)
+	uri := d.Get("URI").(string)
+	_, id := path.Split(uri)
+	d.SetId(id)
 	if hypCPError != nil {
 		d.SetId("")
 		return hypCPError

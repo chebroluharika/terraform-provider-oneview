@@ -14,7 +14,7 @@ data "oneview_scope" "scope_obj" {
 
 resource "oneview_hypervisor_cluster_profile" "HypervisorClusterProfile"{  
     "type"="HypervisorClusterProfileV3",
-    "name"="Cluster5",
+    "name"="Cluster7",
     "description"="",
     "hypervisor_type"="Vmware",
     "hypervisor_manager_uri"="/rest/hypervisor-managers/063055b5-4703-4b0c-8aea-60b23c2de157",
