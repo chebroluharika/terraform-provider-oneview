@@ -22,8 +22,13 @@ import (
 
 func resourceHypervisorClusterProfile() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceHypervisorClusterProfileRead,
-
+		Read:   resourceHypervisorClusterProfileRead,
+		Create: resourceHypervisorClusterProfileCreate,
+		Update: resourceHypervisorClusterProfileUpdate,
+		Delete: resourceHypervisorClusterProfileDelete,
+		Importer: &schema.ResourceImporter{
+			State: schema.ImportStatePassthrough,
+		},
 		Schema: map[string]*schema.Schema{
 			"add_host_requests": {
 				Type:     schema.TypeSet,
@@ -406,6 +411,8 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	rawHypervisorHostProfileTemplate := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
 	hypervisorProfileTemplate := ov.HypervisorHostProfileTemplate{}
 
+	file0, _ := json.MarshalIndent(hypCP, "", " ")
+	_ = ioutil.WriteFile("dp01.json", file0, 0644)
 	for _, raw := range rawHypervisorHostProfileTemplate {
 		/******************* deployment plan start********************/
 		rawHostProfileTemplateItem := raw.(map[string]interface{})
@@ -416,19 +423,20 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			if val, ok := rawDeploymentPlanItem["deployment_custom_args"]; ok {
 				dpCustomArgsOrder := val.(*schema.Set).List()
 				dpCustomArgs := make([]utils.Nstring, len(dpCustomArgsOrder))
-				for i, raw := range dpCustomArgsOrder {
-					dpCustomArgs[i] = utils.Nstring(raw.(string))
+				for i, rawCustomArgs := range dpCustomArgsOrder {
+					dpCustomArgs[i] = utils.Nstring(rawCustomArgs.(string))
 				}
+
+				deploymentPlan.DeploymentCustomArgs = dpCustomArgs
 			}
 			deploymentPlan = ov.DeploymentPlan{
-				DeploymentCustomArgs:      dpCustomArgs,
 				DeploymentPlanDescription: rawDeploymentPlanItem["deployment_plan_description"].(string),
 				DeploymentPlanUri:         utils.Nstring(rawDeploymentPlanItem["deployment_plan_uri"].(string)),
 				Name:                      rawDeploymentPlanItem["name"].(string),
 				ServerPassword:            rawDeploymentPlanItem["server_password"].(string),
 			}
 			file, _ := json.MarshalIndent(deploymentPlan, "", " ")
-            _ = ioutil.WriteFile("dp1.json", file, 0644)
+			_ = ioutil.WriteFile("dp1.json", file, 0644)
 
 			hypervisorProfileTemplate = ov.HypervisorHostProfileTemplate{
 				DeploymentManagerType:    rawHostProfileTemplateItem["deployment_manager_type"].(string),
@@ -437,7 +445,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 				ServerProfileTemplateUri: utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
 			}
 			file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
-            _ = ioutil.WriteFile("hpt1.json", file1, 0644)
+			_ = ioutil.WriteFile("hpt1.json", file1, 0644)
 		}
 
 	}
@@ -458,8 +466,8 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	return nil
 }
 
-/*func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interface{}) error {%
-	config := meta.(*Config)
+func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interface{}) error {
+	/*config := meta.(*Config)
 
 	hypCP := ov.HypervisorClusterProfile{
 		ETAG:        d.Get("etag").(string),
@@ -478,7 +486,8 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	d.SetId(d.Get("name").(string))
 
 	return resourceHypervisorClusterProfileRead(d, meta)
-}*/
+	*/return nil
+}
 
 func resourceHypervisorClusterProfileDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
