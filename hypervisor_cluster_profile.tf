@@ -28,10 +28,10 @@ resource "oneview_hypervisor_cluster_profile" "HypervisorClusterProfile"{
                                },
     "hypervisor_host_profile_template"={  
     "server_profile_template_uri"="/rest/server-profile-templates/278cadfb-2e86-4a05-8932-972553518259"
-     "host_prefix"="Test-Cluster-host"
-     },
      "deployment_plan"={  
      "deployment_plan_uri"="/rest/os-deployment-plans/3abe82af-adcc-44bc-8af5-0a25593283f8"
      "server_password"="myPassword"
       }
+     "host_prefix"="Test-Cluster-host"
+     },
 }
