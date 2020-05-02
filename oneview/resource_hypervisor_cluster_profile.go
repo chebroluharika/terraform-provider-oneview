@@ -12,12 +12,12 @@
 package oneview
 
 import (
+	"encoding/json"
 	"github.com/HewlettPackard/oneview-golang/ov"
 	"github.com/HewlettPackard/oneview-golang/utils"
 	"github.com/hashicorp/terraform/helper/schema"
-	"path"
-	"encoding/json"
 	"io/ioutil"
+	"path"
 )
 
 func resourceHypervisorClusterProfile() *schema.Resource {
@@ -405,64 +405,53 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	}
 	rawHypervisorHostProfileTemplate := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
 	hypervisorProfileTemplate := ov.HypervisorProfileTemplate{}
-	
+
 	for _, raw := range rawHypervisorHostProfileTemplate {
 		/******************* deployment plan start********************/
-		var hptdeploymentplan ov.DeploymentPlan
-		var dpCustomArgs  []utils.Nstring
 		rawHostProfileTemplateItem := raw.(map[string]interface{})
-		deploymentpPlan := make([]ov.DeploymentPlan,0)
-		rawDeploymentPlan= rawHostProfileTemplateItem ["deployment_plan"].(*schema.Set).List()
-		for _,raw2 := range 
-
-
-		dp_map, _ := (d.Get("hypervisor_host_profile_template")).(map[string]interface{})
-		deploymentplanlist := dp_map["deployment_plan"].(*schema.Set).List()
-		for _, dp_raw := range deploymentplanlist {
-		file1, _ := json.MarshalIndent(dp_raw, "", " ")
-		_ = ioutil.WriteFile("dp_raw.json", file1, 0644)
-			deploymentPlan := dp_raw.(map[string]interface{})
-			/*******************dp_custom-args start***********************/
-			if val, ok := deploymentPlan["deployment_custom_args"]; ok {
+		deploymentPlan := make([]ov.DeploymentPlan, 0)
+		rawDeploymentPlan = rawHostProfileTemplateItem["deployment_plan"].(*schema.Set).List()
+		for _, raw2 := range rawDeploymentPlan {
+			rawDeploymentPlanItem := raw2.(map[string]interface{})
+			if val, ok := rawDeploymentPlanItem["deployment_custom_args"]; ok {
 				dpCustomArgsOrder := val.(*schema.Set).List()
 				dpCustomArgs = make([]utils.Nstring, len(dpCustomArgsOrder))
 				for i, raw := range dpCustomArgsOrder {
 					dpCustomArgs[i] = utils.Nstring(raw.(string))
 				}
 			}
-			/********************dp custom args end**********************/
-			hptdeploymentplan = ov.DeploymentPlan{
+			deploymentPlan = ov.DeploymentPlan{
 				DeploymentCustomArgs:      dpCustomArgs,
-				DeploymentPlanDescription: deploymentPlan["deployment_plan_description"].(string),
-				DeploymentPlanUri:         utils.Nstring(deploymentPlan["deployment_plan_uri"].(string)),
-				Name:                      deploymentPlan["name"].(string),
-				ServerPassword:            deploymentPlan["server_password"].(string),
+				DeploymentPlanDescription: rawDeploymentPlanItem["deployment_plan_description"].(string),
+				DeploymentPlanUri:         utils.Nstring(rawDeploymentPlanItem["deployment_plan_uri"].(string)),
+				Name:                      rawDeploymentPlanItem["name"].(string),
+				ServerPassword:            rawDeploymentPlanItem["server_password"].(string),
 			}
+			file, _ := json.MarshalIndent(deploymentPlan, "", " ")
+            _ = ioutil.WriteFile("dp1.json", file, 0644)
 
+			hypervisorProfileTemplate = ov.HypervisorHostProfileTemplate{
+				DeploymentManagerType:    rawHostProfileTemplateItem["deployment_manager_type"].(string),
+				DeploymentPlan:           deploymentPlan,
+				Hostprefix:               rawHostProfileTemplateItem["host_prefix"].(string),
+				ServerProfileTemplateUri: utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
+			}
+			file, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
+            _ = ioutil.WriteFile("hpt1.json", file, 0644)
 		}
-		file, _ := json.MarshalIndent(hptdeploymentplan, "", " ")
-		_ = ioutil.WriteFile("dp.json", file, 0644)
 
-		/********************deployment plan end**********************************************/
-		hostprofiletemplate := raw.(map[string]interface{})
-		hypHostProfileTemplate := ov.HypervisorHostProfileTemplate{
-			DeploymentManagerType:    hostprofiletemplate["deployment_manager_type"].(string),
-			DeploymentPlan:           &hptdeploymentplan,
-			Hostprefix:               hostprofiletemplate["host_prefix"].(string),
-			ServerProfileTemplateUri: utils.Nstring(hostprofiletemplate["server_profile_template_uri"].(string)),
-		}
-		hypCP.HypervisorHostProfileTemplate = &hypHostProfileTemplate
 	}
-	/**********************hypervisor hosr profile end************************************************/
+	hypCP.HypervisorHostProfileTemplate = &hypervisorProfileTemplate
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
 	uri := d.Get("URI").(string)
 	_, id := path.Split(uri)
-        d.SetId(id)
+	d.SetId(id)
 	if hypCPError != nil {
 		d.SetId("")
 		return hypCPError
 	}
 	return resourceHypervisorClusterProfileRead(d, meta)
+
 }
 
 func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface{}) error {
