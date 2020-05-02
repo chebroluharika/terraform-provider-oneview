@@ -17,7 +17,7 @@ import (
 	"github.com/HewlettPackard/oneview-golang/utils"
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
-	"path"
+//	"path"
 )
 
 func resourceHypervisorClusterProfile() *schema.Resource {
@@ -393,11 +393,12 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		Type:        d.Get("type").(string),
 		URI:         utils.Nstring(d.Get("uri").(string)),
 	}
+	hypClusterSettings := ov.HypervisorClusterSettings {}
 	HypervisorClusterSettingslist := d.Get("hypervisor_cluster_settings").(*schema.Set).List()
 	for _, raw := range HypervisorClusterSettingslist {
 		hypervisorClusterSettings := raw.(map[string]interface{})
 
-		hypClusterSettings := ov.HypervisorClusterSettings{
+		hypClusterSettings = ov.HypervisorClusterSettings{
 			DistributedSwitchUsage:   hypervisorClusterSettings["distributed_switch_usage"].(string),
 			DistributedSwitchVersion: hypervisorClusterSettings["distributed_switch_version"].(string),
 			DrsEnabled:               hypervisorClusterSettings["drs_enabled"].(bool),
@@ -406,13 +407,11 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			Type:                     hypervisorClusterSettings["type"].(string),
 			VirtualSwitchType:        hypervisorClusterSettings["virtual_switch_type"].(string),
 		}
-		hypCP.HypervisorClusterSettings = &hypClusterSettings
 	}
+	hypCP.HypervisorClusterSettings = &hypClusterSettings
 	rawHypervisorHostProfileTemplate := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
 	hypervisorProfileTemplate := ov.HypervisorHostProfileTemplate{}
 
-	file0, _ := json.MarshalIndent(hypCP, "", " ")
-	_ = ioutil.WriteFile("dp01.json", file0, 0644)
 	for _, raw := range rawHypervisorHostProfileTemplate {
 		/******************* deployment plan start********************/
 		rawHostProfileTemplateItem := raw.(map[string]interface{})
@@ -450,10 +449,12 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 
 	}
 	hypCP.HypervisorHostProfileTemplate = &hypervisorProfileTemplate
+	file0, _ := json.MarshalIndent(hypCP, "", " ")
+	_ = ioutil.WriteFile("hpycp.json", file0, 0644)
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
-	uri := d.Get("URI").(string)
-	_, id := path.Split(uri)
-	d.SetId(id)
+	//uri := d.Get("URI").(string)
+	//_, id := path.Split(uri)
+	//d.SetId(id)
 	if hypCPError != nil {
 		d.SetId("")
 		return hypCPError
