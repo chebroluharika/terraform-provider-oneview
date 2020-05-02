@@ -457,11 +457,11 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 
 		/*****************switch config policy**************************/
 		hypervisorProfileTemplate = ov.HypervisorHostProfileTemplate{
-			DeploymentManagerType:    rawHostProfileTemplateItem["deployment_manager_type"].(string),
-			DeploymentPlan:           &deploymentPlan,
-			Hostprefix:               rawHostProfileTemplateItem["host_prefix"].(string),
-			ServerProfileTemplateUri: utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
-			VirtualSwitchConfigPolicy : &virtualSwitchConfigPolicy,
+			DeploymentManagerType:     rawHostProfileTemplateItem["deployment_manager_type"].(string),
+			DeploymentPlan:            &deploymentPlan,
+			Hostprefix:                rawHostProfileTemplateItem["host_prefix"].(string),
+			ServerProfileTemplateUri:  utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
+			VirtualSwitchConfigPolicy: &virtualSwitchConfigPolicy,
 		}
 		file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
 		_ = ioutil.WriteFile("hpt1.json", file1, 0644)
@@ -483,7 +483,189 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 }
 
 func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*Config)
+	uri := d.Get("uri").(string)
+	_, id := path.Split(uri)
+	d.SetId(id)
+
+	hypCP, err := config.ovClient.GetHypervisorClusterProfileById(d.Id())
+	if err != nil || hypCP.URI.IsNil() {
+		d.SetId("")
+		return nil
+	}
+	d.SetId(id)
+	addHostRequests := make([]interface{}, len(hypCP.AddHostRequests))
+	for i, addHostRequest := range hypCP.AddHostRequests {
+		addHostRequests[i] = addHostRequest
+	}
+	d.Set("add_host_requests", addHostRequests)
+	d.Set("category", hypCP.Category)
+	d.Set("compliance_state", hypCP.ComplianceState)
+	d.Set("created", hypCP.Created)
+	d.Set("description", hypCP.Description.String())
+	d.Set("e_tag", hypCP.ETag)
+	hypCPCS_list := make([]map[string]interface{}, 0, 1)
+	hypCPCS_list = append(hypCPCS_list, map[string]interface{}{
+		"distributed_switch_version": hypCP.HypervisorClusterSettings.DistributedSwitchVersion,
+		"distributed_switch_usage":   hypCP.HypervisorClusterSettings.DistributedSwitchUsage,
+		"drs_enabled":                hypCP.HypervisorClusterSettings.DrsEnabled,
+		"ha_enabled":                 hypCP.HypervisorClusterSettings.HaEnabled,
+		"multi_nic_v_motion":         hypCP.HypervisorClusterSettings.MultiNicVMotion,
+		"type":                       hypCP.HypervisorClusterSettings.Type,
+		"virtual_switch_type":        hypCP.HypervisorClusterSettings.VirtualSwitchType,
+	})
+
+	d.Set("hypervisor_cluster_settings", hypCPCS_list)
+
+	d.Set("hypervisor_cluster_uri", hypCP.HypervisorClusterUri)
+	deploymentCustomArgs := make([]interface{}, len(hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs))
+	for i, deploymentCustomArg := range hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs {
+		deploymentCustomArgs[i] = deploymentCustomArg.String()
+	}
+	dplist := make([]map[string]interface{}, 0, 1)
+	dplist = append(dplist, map[string]interface{}{
+
+		"deployment_custom_args":      deploymentCustomArgs,
+		"deployment_plan_description": hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentPlanDescription,
+		"deployment_plan_uri":         hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentPlanUri.String(),
+		"name":                        hypCP.HypervisorHostProfileTemplate.DeploymentPlan.Name,
+		"server_password":             hypCP.HypervisorHostProfileTemplate.DeploymentPlan.ServerPassword,
+	})
+	hostConfigPolicylist := make([]map[string]interface{}, 0, 1)
+	hostConfigPolicylist = append(hostConfigPolicylist, map[string]interface{}{
+		"leave_host_in_maintenance":   hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.LeaveHostInMaintenance,
+		"use_host_prefix_as_hostname": hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.LeaveHostInMaintenance,
+		"use_hostname_to_register":    hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.UseHostnameToRegister,
+	})
+
+	virtualSwitchConfigPolicylist := make([]map[string]interface{}, 0, 1)
+	virtualSwitchConfigPolicylist = append(virtualSwitchConfigPolicylist, map[string]interface{}{
+		"configure_port_group":    hypCP.HypervisorHostProfileTemplate.VirtualSwitchConfigPolicy.ConfigurePortGroups,
+		"custom_virtual_switches": hypCP.HypervisorHostProfileTemplate.VirtualSwitchConfigPolicy.CustomVirtualSwitches,
+		"manage_virtual_switches": hypCP.HypervisorHostProfileTemplate.VirtualSwitchConfigPolicy.ManageVirtualSwitches,
+	})
+
+	/**************** virtual switches*******************************/
+
+	virtualSwitches := make([]map[string]interface{}, 0, len(hypCP.HypervisorHostProfileTemplate.VirtualSwitches))
+	for _, virtualSwitch := range hypCP.HypervisorHostProfileTemplate.VirtualSwitches {
+
+		/***********virtualswicth port group*****************************/
+
+		virtualSwitchPortGroups := make([]map[string]interface{}, 0, len(virtualSwitch.VirtualSwitchPortGroups))
+		for _, virtualSwitchPortGroup := range virtualSwitch.VirtualSwitchPortGroups {
+			vspgnetworkUris := make([]interface{}, len(virtualSwitchPortGroup.NetworkUris))
+			for i, vspgnetworkUri := range virtualSwitchPortGroup.NetworkUris {
+				vspgnetworkUris[i] = vspgnetworkUri.String()
+			}
+			/***********vritual switch ports*********************/
+
+			virtualSwitchPorts := make([]map[string]interface{}, 0, len(virtualSwitchPortGroup.VirtualSwitchPorts))
+			for _, virtualSwitchPort := range virtualSwitchPortGroup.VirtualSwitchPorts {
+				virtualPortPurposes := make([]interface{}, len(virtualSwitchPort.VirtualPortPurpose))
+				for i, virtualPortPurpose := range virtualSwitchPort.VirtualPortPurpose {
+					virtualPortPurposes[i] = virtualPortPurpose
+				}
+				virtualSwitchPorts = append(virtualSwitchPorts, map[string]interface{}{
+					"action":               virtualSwitchPort.Action,
+					"dhcp":                 virtualSwitchPort.Dhcp,
+					"ip_address":           virtualSwitchPort.IpAddress,
+					"subnet_mask":          virtualSwitchPort.SubnetMask,
+					"virtual_port_purpose": virtualPortPurposes,
+				})
+			}
+			/*************virtual switch ports ends********************/
+			virtualSwitchPortGroups = append(virtualSwitchPortGroups, map[string]interface{}{
+				"action":               virtualSwitchPortGroup.Action,
+				"name":                 virtualSwitchPortGroup.Name,
+				"network_uris":         vspgnetworkUris,
+				"virtual_switch_ports": virtualSwitchPorts,
+				"vlan":                 virtualSwitchPortGroup.Vlan,
+			})
+		}
+
+		/**********virtual switch port group ends*********/
+
+		/**********Virtual switch uplink***********/
+		virtualSwitchPortUplinks := make([]map[string]interface{}, 0, len(virtualSwitch.VirtualSwitchUplinks))
+		for _, virtualSwitchPortUplink := range virtualSwitch.VirtualSwitchUplinks {
+			virtualSwitchPortUplinks = append(virtualSwitchPortUplinks, map[string]interface{}{
+				"action": virtualSwitchPortUplink.Action,
+				"active": virtualSwitchPortUplink.Active,
+				"mac":    virtualSwitchPortUplink.Mac,
+				"name":   virtualSwitchPortUplink.Name,
+				"vmnic":  virtualSwitchPortUplink.Vmnic,
+			})
+		}
+
+		/**********virtual switch upnlinks end************/
+
+		networkUris := make([]interface{}, len(virtualSwitch.NetworkUris))
+		for i, networkUri := range virtualSwitch.NetworkUris {
+			networkUris[i] = networkUri
+		}
+
+		virtualSwitches = append(virtualSwitches, map[string]interface{}{
+			"action":                     virtualSwitch.Action,
+			"name":                       virtualSwitch.Name,
+			"network_uris":               networkUris,
+			"version":                    virtualSwitch.Version,
+			"virtual_switch_port_groups": virtualSwitchPortGroups,
+			"virtual_switch_type":        virtualSwitch.VirtualSwitchType,
+			"virtual_switch_uplinks":     virtualSwitchPortUplinks,
+		})
+
+	}
+
+	/*****************virtual switch ends*************************************/
+
+	hypCPHHPT_list := make([]map[string]interface{}, 0, 1)
+	hypCPHHPT_list = append(hypCPHHPT_list, map[string]interface{}{
+		"deployment_manager_type":      hypCP.HypervisorHostProfileTemplate.DeploymentManagerType,
+		"deployment_plan":              dplist,
+		"host_config_policy":           hostConfigPolicylist,
+		"host_prefix":                  hypCP.HypervisorHostProfileTemplate.Hostprefix,
+		"server_profile_template_uri":  hypCP.HypervisorHostProfileTemplate.ServerProfileTemplateUri.String(),
+		"virtual_switch_config_policy": virtualSwitchConfigPolicylist,
+		"virtual_switches":             virtualSwitches,
+	})
+	file, _ := json.MarshalIndent(dplist, "", " ")
+	_ = ioutil.WriteFile("dp.json", file, 0644)
+	file1, _ := json.MarshalIndent(hostConfigPolicylist, "", " ")
+	_ = ioutil.WriteFile("hcplist.json", file1, 0644)
+	file2, _ := json.MarshalIndent(virtualSwitchConfigPolicylist, "", " ")
+	_ = ioutil.WriteFile("virtualSwitchConfigPolicylist.json", file2, 0644)
+	file3, _ := json.MarshalIndent(virtualSwitches, "", " ")
+	_ = ioutil.WriteFile("virtualSwitches.json", file3, 0644)
+
+	d.Set("hypervisor_host_profile_template", hypCPHHPT_list)
+	d.Set("hypervisor_host_profile_uris", hypCP.HypervisorHostProfileUris)
+	d.Set("hypervisor_manager_uri", hypCP.HypervisorManagerUri)
+	d.Set("hypervisor_type", hypCP.HypervisorType)
+	ipPools := make([]interface{}, len(hypCP.IpPools))
+	for i, ipPool := range hypCP.IpPools {
+		ipPools[i] = ipPool
+	}
+	d.Set("ip_pools", ipPools)
+	d.Set("mgmt_ip_settings_override", hypCP.MgmtIpSettingsOverride)
+	d.Set("modified", hypCP.Modified)
+	d.Set("name", hypCP.Name)
+	d.Set("path", hypCP.Path)
+	d.Set("refresh_state", hypCP.RefreshState)
+	d.Set("scopes_uri", hypCP.ScopesUri)
+	sharedStorageVolumes := make([]interface{}, len(hypCP.SharedStorageVolumes))
+	for i, sharedStorageVolume := range hypCP.SharedStorageVolumes {
+		sharedStorageVolumes[i] = sharedStorageVolume
+	}
+	d.Set("shared_storage_volumes", sharedStorageVolumes)
+	d.Set("state", hypCP.State)
+	d.Set("state_reason", hypCP.StateReason)
+	d.Set("status", hypCP.Status)
+	d.Set("type", hypCP.Type)
+	d.Set("uri", hypCP.URI)
+
 	return nil
+
 }
 
 func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interface{}) error {
