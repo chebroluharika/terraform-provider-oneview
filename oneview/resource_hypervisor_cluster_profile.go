@@ -411,21 +411,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	}
 	HypervisorHostProfileTemplateList := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
 	for _, raw := range HypervisorHostProfileTemplateList {
-		
-		hostprofiletemplate := raw.(map[string]interface{})
-		file2, _ := json.MarshalIndent(hostprofiletemplate , "", " ")
-		_ = ioutil.WriteFile("hptl_raw.json", file2, 0644)
-		
-		hypHostProfileTemplate := ov.HypervisorHostProfileTemplate{
-			DeploymentManagerType:    hostprofiletemplate["deployment_manager_type"].(string),
-			DeploymentPlan:           &hptdeploymentplan,
-			Hostprefix:               hostprofiletemplate["host_prefix"].(string),
-			ServerProfileTemplateUri: utils.Nstring(hostprofiletemplate["server_profile_template_uri"].(string)),
-		}
-		hypCP.HypervisorHostProfileTemplate = &hypHostProfileTemplate
-	}
-	/**********************hypervisor hosr profile end************************************************/
-	/******************* deployment plan start********************/
+		/******************* deployment plan start********************/
 	var hptdeploymentplan ov.DeploymentPlan
 	var dpCustomArgs  []utils.Nstring
 
@@ -459,6 +445,21 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	_ = ioutil.WriteFile("dp.json", file, 0644)
 
 	/********************deployment plan end**********************************************/
+		
+		hostprofiletemplate := raw.(map[string]interface{})
+		file2, _ := json.MarshalIndent(hostprofiletemplate , "", " ")
+		_ = ioutil.WriteFile("hptl_raw.json", file2, 0644)
+		
+		hypHostProfileTemplate := ov.HypervisorHostProfileTemplate{
+			DeploymentManagerType:    hostprofiletemplate["deployment_manager_type"].(string),
+			DeploymentPlan:           &hptdeploymentplan,
+			Hostprefix:               hostprofiletemplate["host_prefix"].(string),
+			ServerProfileTemplateUri: utils.Nstring(hostprofiletemplate["server_profile_template_uri"].(string)),
+		}
+		hypCP.HypervisorHostProfileTemplate = &hypHostProfileTemplate
+	}
+	/**********************hypervisor hosr profile end************************************************/
+	
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
 	uri := d.Get("URI").(string)
 	_, id := path.Split(uri)
