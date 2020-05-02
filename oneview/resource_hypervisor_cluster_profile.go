@@ -415,39 +415,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		hostprofiletemplate := raw.(map[string]interface{})
 		file2, _ := json.MarshalIndent(hostprofiletemplate , "", " ")
 		_ = ioutil.WriteFile("hptl_raw.json", file2, 0644)
-		/******************* deployment plan start********************/
-		var hptdeploymentplan ov.DeploymentPlan
-		var dpCustomArgs  []utils.Nstring
-
-		//dp_map, _ := hostprofiletemplate.(map[string]interface{})
-		deploymentplanlist := hostprofiletemplate["deployment_plan"]
-		//deploymentplanlist := dp_map["deployment_plan"]
-		for _, dp_raw := range deploymentplanlist {
-		file2, _ = json.MarshalIndent(dp_raw, "", " ")
-		_ = ioutil.WriteFile("hpt_raw.json", file2, 0644)
-			deploymentPlan := dp_raw.(map[string]interface{})
-			/*******************dp_custom-args start***********************/
-			if val, ok := deploymentPlan["deployment_custom_args"]; ok {
-				dpCustomArgsOrder := val.(*schema.Set).List()
-				dpCustomArgs = make([]utils.Nstring, len(dpCustomArgsOrder))
-				for i, rawcustom := range dpCustomArgsOrder {
-					dpCustomArgs[i] = utils.Nstring(rawcustom.(string))
-				}
-			}
-			/********************dp custom args end**********************/
-			hptdeploymentplan = ov.DeploymentPlan{
-				DeploymentCustomArgs:      dpCustomArgs,
-				DeploymentPlanDescription: deploymentPlan["deployment_plan_description"].(string),
-				DeploymentPlanUri:         utils.Nstring(deploymentPlan["deployment_plan_uri"].(string)),
-				Name:                      deploymentPlan["name"].(string),
-				ServerPassword:            deploymentPlan["server_password"].(string),
-			}
-
-		}
-		file, _ := json.MarshalIndent(hptdeploymentplan, "", " ")
-		_ = ioutil.WriteFile("dp.json", file, 0644)
-
-		/********************deployment plan end**********************************************/
+		
 		hypHostProfileTemplate := ov.HypervisorHostProfileTemplate{
 			DeploymentManagerType:    hostprofiletemplate["deployment_manager_type"].(string),
 			DeploymentPlan:           &hptdeploymentplan,
@@ -457,6 +425,40 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		hypCP.HypervisorHostProfileTemplate = &hypHostProfileTemplate
 	}
 	/**********************hypervisor hosr profile end************************************************/
+	/******************* deployment plan start********************/
+	var hptdeploymentplan ov.DeploymentPlan
+	var dpCustomArgs  []utils.Nstring
+
+	//dp_map, _ := hostprofiletemplate.(map[string]interface{})
+	deploymentplanlist := d.Get("deployment_plan").(*schema.Set).List()	
+	for _, dp_raw := range deploymentplanlist {
+	file2, _ = json.MarshalIndent(dp_raw, "", " ")
+	_ = ioutil.WriteFile("hpt_raw.json", file2, 0644)
+		deploymentPlan := dp_raw.(map[string]interface{})
+		/*******************dp_custom-args start***********************/
+		if val, ok := deploymentPlan["deployment_custom_args"]; ok {
+			dpCustomArgsOrder := val.(*schema.Set).List()
+			dpCustomArgs = make([]utils.Nstring, len(dpCustomArgsOrder))
+			for i, rawcustom := range dpCustomArgsOrder {
+				dpCustomArgs[i] = utils.Nstring(rawcustom.(string))
+			}
+		}
+		/********************dp custom args end**********************/
+		hptdeploymentplan = ov.DeploymentPlan{
+			DeploymentCustomArgs:      dpCustomArgs,
+			DeploymentPlanDescription: deploymentPlan["deployment_plan_description"].(string),
+			DeploymentPlanUri:         utils.Nstring(deploymentPlan["deployment_plan_uri"].(string)),
+			Name:                      deploymentPlan["name"].(string),
+			ServerPassword:            deploymentPlan["server_password"].(string),
+		}
+
+		hypCP.HypervisorHostProfileTemplate.DeploymentPlan=&hptdeploymentplan
+
+	}
+	file, _ := json.MarshalIndent(hptdeploymentplan, "", " ")
+	_ = ioutil.WriteFile("dp.json", file, 0644)
+
+	/********************deployment plan end**********************************************/
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
 	uri := d.Get("URI").(string)
 	_, id := path.Split(uri)
