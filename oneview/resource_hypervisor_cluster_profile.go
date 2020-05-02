@@ -112,7 +112,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"deployment_custom_args": {
-										Type:     schema.TypSet,
+										Type:     schema.TypeSet,
 										Optional: true,
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
@@ -404,18 +404,18 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		hypCP.HypervisorClusterSettings = &hypClusterSettings
 	}
 	rawHypervisorHostProfileTemplate := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
-	hypervisorProfileTemplate := ov.HypervisorProfileTemplate{}
+	hypervisorProfileTemplate := ov.HypervisorHostProfileTemplate{}
 
 	for _, raw := range rawHypervisorHostProfileTemplate {
 		/******************* deployment plan start********************/
 		rawHostProfileTemplateItem := raw.(map[string]interface{})
-		deploymentPlan := make([]ov.DeploymentPlan, 0)
-		rawDeploymentPlan = rawHostProfileTemplateItem["deployment_plan"].(*schema.Set).List()
+		deploymentPlan := ov.DeploymentPlan{}
+		rawDeploymentPlan := rawHostProfileTemplateItem["deployment_plan"].(*schema.Set).List()
 		for _, raw2 := range rawDeploymentPlan {
 			rawDeploymentPlanItem := raw2.(map[string]interface{})
 			if val, ok := rawDeploymentPlanItem["deployment_custom_args"]; ok {
 				dpCustomArgsOrder := val.(*schema.Set).List()
-				dpCustomArgs = make([]utils.Nstring, len(dpCustomArgsOrder))
+				dpCustomArgs := make([]utils.Nstring, len(dpCustomArgsOrder))
 				for i, raw := range dpCustomArgsOrder {
 					dpCustomArgs[i] = utils.Nstring(raw.(string))
 				}
@@ -432,12 +432,12 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 
 			hypervisorProfileTemplate = ov.HypervisorHostProfileTemplate{
 				DeploymentManagerType:    rawHostProfileTemplateItem["deployment_manager_type"].(string),
-				DeploymentPlan:           deploymentPlan,
+				DeploymentPlan:           &deploymentPlan,
 				Hostprefix:               rawHostProfileTemplateItem["host_prefix"].(string),
 				ServerProfileTemplateUri: utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
 			}
-			file, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
-            _ = ioutil.WriteFile("hpt1.json", file, 0644)
+			file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
+            _ = ioutil.WriteFile("hpt1.json", file1, 0644)
 		}
 
 	}
