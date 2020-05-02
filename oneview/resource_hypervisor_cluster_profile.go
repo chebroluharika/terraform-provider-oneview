@@ -12,12 +12,12 @@
 package oneview
 
 import (
+	"encoding/json"
 	"github.com/HewlettPackard/oneview-golang/ov"
 	"github.com/HewlettPackard/oneview-golang/utils"
 	"github.com/hashicorp/terraform/helper/schema"
-	"path"
-	"encoding/json"
 	"io/ioutil"
+	"path"
 )
 
 func resourceHypervisorClusterProfile() *schema.Resource {
@@ -403,53 +403,57 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		}
 		hypCP.HypervisorClusterSettings = &hypClusterSettings
 	}
+
 	HypervisorHostProfileTemplateList := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
 	for _, raw := range HypervisorHostProfileTemplateList {
-		
+
 		hostprofiletemplate := raw.(map[string]interface{})
-		/******************* deployment plan start********************/
-		var hptdeploymentplan ov.DeploymentPlan
-		var dpCustomArgs  []utils.Nstring
 
-		dp_map, _ := raw.(map[string]interface{})
-		deploymentplanlist := dp_map["deployment_plan"].(*schema.Set).List()
-		for _, dp_raw := range deploymentplanlist {
-			deploymentPlan := dp_raw.(map[string]interface{})
-			/*******************dp_custom-args start***********************/
-			if val, ok := deploymentPlan["deployment_custom_args"]; ok {
-				dpCustomArgsOrder := val.(*schema.Set).List()
-				dpCustomArgs = make([]utils.Nstring, len(dpCustomArgsOrder))
-				for i, raw := range dpCustomArgsOrder {
-					dpCustomArgs[i] = utils.Nstring(raw.(string))
-				}
-			}
-			/********************dp custom args end**********************/
-			hptdeploymentplan = ov.DeploymentPlan{
-				DeploymentCustomArgs:      dpCustomArgs,
-				DeploymentPlanDescription: deploymentPlan["deployment_plan_description"].(string),
-				DeploymentPlanUri:         utils.Nstring(deploymentPlan["deployment_plan_uri"].(string)),
-				Name:                      deploymentPlan["name"].(string),
-				ServerPassword:            deploymentPlan["server_password"].(string),
-			}
-
-		}
-		file, _ := json.MarshalIndent(hptdeploymentplan, "", " ")
-		_ = ioutil.WriteFile("dp.json", file, 0644)
-
-		/********************deployment plan end**********************************************/
 		hypHostProfileTemplate := ov.HypervisorHostProfileTemplate{
-			DeploymentManagerType:    hostprofiletemplate["deployment_manager_type"].(string),
-			DeploymentPlan:           &hptdeploymentplan,
+			DeploymentManagerType: hostprofiletemplate["deployment_manager_type"].(string),
+
 			Hostprefix:               hostprofiletemplate["host_prefix"].(string),
 			ServerProfileTemplateUri: utils.Nstring(hostprofiletemplate["server_profile_template_uri"].(string)),
 		}
 		hypCP.HypervisorHostProfileTemplate = &hypHostProfileTemplate
 	}
+
 	/**********************hypervisor hosr profile end************************************************/
+	/******************* deployment plan start********************/
+	var hptdeploymentplan ov.DeploymentPlan
+	var dpCustomArgs []utils.Nstring
+	DeploymentPlanlist := d.Get("deployment_plan").(*schema.Set).List()
+	//dp_map, _ := raw.(map[string]interface{})
+	//deploymentplanlist := dp_map["deployment_plan"].(*schema.Set).List()
+	for _, dp_raw := range DeploymentPlanlist {
+		deploymentPlan := dp_raw.(map[string]interface{})
+		/*******************dp_custom-args start***********************/
+		if val, ok := deploymentPlan["deployment_custom_args"]; ok {
+			dpCustomArgsOrder := val.(*schema.Set).List()
+			dpCustomArgs = make([]utils.Nstring, len(dpCustomArgsOrder))
+			for i, raw := range dpCustomArgsOrder {
+				dpCustomArgs[i] = utils.Nstring(raw.(string))
+			}
+		}
+		/********************dp custom args end**********************/
+		hptdeploymentplan = ov.DeploymentPlan{
+			DeploymentCustomArgs:      dpCustomArgs,
+			DeploymentPlanDescription: deploymentPlan["deployment_plan_description"].(string),
+			DeploymentPlanUri:         utils.Nstring(deploymentPlan["deployment_plan_uri"].(string)),
+			Name:                      deploymentPlan["name"].(string),
+			ServerPassword:            deploymentPlan["server_password"].(string),
+		}
+		hypCP.HypervisorHostProfileTemplate.DeploymentPlan = &hptdeploymentplan
+
+	}
+	file, _ := json.MarshalIndent(hptdeploymentplan, "", " ")
+	_ = ioutil.WriteFile("dp.json", file, 0644)
+
+	/********************deployment plan end**********************************************/
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
 	uri := d.Get("URI").(string)
 	_, id := path.Split(uri)
-        d.SetId(id)
+	d.SetId(id)
 	if hypCPError != nil {
 		d.SetId("")
 		return hypCPError
