@@ -437,11 +437,30 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			file, _ := json.MarshalIndent(deploymentPlan, "", " ")
 			_ = ioutil.WriteFile("dp1.json", file, 0644)
 		}
+		/******************* deployment plan end********************/
+
+		/*****************switch config policy**************************/
+		rawVirtualSwitchConfigPolicy := rawHostProfileTemplateItem["virtual_switch_config_policy"].(*schema.Set).List()
+
+		for _, raw3 := range rawSwitchConfigPolicy {
+			rawVirtualSwitchConfigPolicyItem := raw3.(map[string]interface{})
+
+			virtualswitchConfigPolicy = ov.VirtualSwitchConfigPolicy{
+				ConfigurePortGroups:   rawVirtualSwitchConfigPolicyItem["configure_port_group"].(bool),
+				CustomVirtualSwitches: rawVirtualSwitchConfigPolicyItem["custom_virtual_switches"].(bool),
+				ManageVirtualSwitches: rawDeploymentPlanItem["manage_virtual_switches"].(bool),
+			}
+			file, _ := json.MarshalIndent(virtualswitchConfigPolicy, "", " ")
+			_ = ioutil.WriteFile("vscp.json", file, 0644)
+		}
+
+		/*****************switch config policy**************************/
 		hypervisorProfileTemplate = ov.HypervisorHostProfileTemplate{
 			DeploymentManagerType:    rawHostProfileTemplateItem["deployment_manager_type"].(string),
 			DeploymentPlan:           &deploymentPlan,
 			Hostprefix:               rawHostProfileTemplateItem["host_prefix"].(string),
 			ServerProfileTemplateUri: utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
+			VirtualSwitchConfigPolicy : &virtualswitchConfigPolicy,
 		}
 		file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
 		_ = ioutil.WriteFile("hpt1.json", file1, 0644)
