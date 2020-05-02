@@ -17,7 +17,7 @@ import (
 	"github.com/HewlettPackard/oneview-golang/utils"
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
-//	"path"
+	//	"path"
 )
 
 func resourceHypervisorClusterProfile() *schema.Resource {
@@ -393,7 +393,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		Type:        d.Get("type").(string),
 		URI:         utils.Nstring(d.Get("uri").(string)),
 	}
-	hypClusterSettings := ov.HypervisorClusterSettings {}
+	hypClusterSettings := ov.HypervisorClusterSettings{}
 	HypervisorClusterSettingslist := d.Get("hypervisor_cluster_settings").(*schema.Set).List()
 	for _, raw := range HypervisorClusterSettingslist {
 		hypervisorClusterSettings := raw.(map[string]interface{})
@@ -436,16 +436,15 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			}
 			file, _ := json.MarshalIndent(deploymentPlan, "", " ")
 			_ = ioutil.WriteFile("dp1.json", file, 0644)
-
-			hypervisorProfileTemplate = ov.HypervisorHostProfileTemplate{
-				DeploymentManagerType:    rawHostProfileTemplateItem["deployment_manager_type"].(string),
-				DeploymentPlan:           &deploymentPlan,
-				Hostprefix:               rawHostProfileTemplateItem["host_prefix"].(string),
-				ServerProfileTemplateUri: utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
-			}
-			file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
-			_ = ioutil.WriteFile("hpt1.json", file1, 0644)
 		}
+		hypervisorProfileTemplate = ov.HypervisorHostProfileTemplate{
+			DeploymentManagerType:    rawHostProfileTemplateItem["deployment_manager_type"].(string),
+			DeploymentPlan:           &deploymentPlan,
+			Hostprefix:               rawHostProfileTemplateItem["host_prefix"].(string),
+			ServerProfileTemplateUri: utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
+		}
+		file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
+		_ = ioutil.WriteFile("hpt1.json", file1, 0644)
 
 	}
 	hypCP.HypervisorHostProfileTemplate = &hypervisorProfileTemplate
