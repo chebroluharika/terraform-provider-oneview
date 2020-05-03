@@ -391,9 +391,8 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		StateReason: d.Get("state_reason").(string),
 		Status:      d.Get("status").(string),
 		Type:        d.Get("type").(string),
-		//URI:         utils.Nstring(d.Get("uri").(string)),
 	}
-	file0, _ := json.MarshalIndent(d, "", " ")
+	file0, _ := json.MarshalIndent(hypCP, "", " ")
 	_ = ioutil.WriteFile("hpycp3.json", file0, 0644)
 	hypClusterSettings := ov.HypervisorClusterSettings{}
 	HypervisorClusterSettingslist := d.Get("hypervisor_cluster_settings").(*schema.Set).List()
@@ -473,8 +472,6 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
 	file0, _ = json.MarshalIndent(d.Get("uri"), "", " ")
 	_ = ioutil.WriteFile("hpycp2.json", file0, 0644)
-	//uri := d.Get("uri").(string)
-	//_, id := path.Split(uri)
 	d.SetId(d.Get("name").(string))
 	if hypCPError != nil {
 		d.SetId("")
@@ -486,7 +483,6 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 
 func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	//d.SetId(id)
 	hypCP, err := config.ovClient.GetHypervisorClusterProfileByName(d.Id())
 	file0, _ := json.MarshalIndent(hypCP, "", " ")
 	_ = ioutil.WriteFile("hpycp1.json", file0, 0644)
@@ -494,7 +490,6 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		d.SetId("")
 		return nil
 	}
-//	d.SetId()
 	addHostRequests := make([]interface{}, len(hypCP.AddHostRequests))
 	for i, addHostRequest := range hypCP.AddHostRequests {
 		addHostRequests[i] = addHostRequest
@@ -505,7 +500,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	d.Set("created", hypCP.Created)
 	d.Set("description", hypCP.Description.String())
 	d.Set("e_tag", hypCP.ETag)
-/*	hypCPCS_list := make([]map[string]interface{}, 0, 1)
+	hypCPCS_list := make([]map[string]interface{}, 0, 1)
 	hypCPCS_list = append(hypCPCS_list, map[string]interface{}{
 		"distributed_switch_version": hypCP.HypervisorClusterSettings.DistributedSwitchVersion,
 		"distributed_switch_usage":   hypCP.HypervisorClusterSettings.DistributedSwitchUsage,
@@ -517,7 +512,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	})
 
 	d.Set("hypervisor_cluster_settings", hypCPCS_list)
-*/
+
 	d.Set("hypervisor_cluster_uri", hypCP.HypervisorClusterUri)
 /*	deploymentCustomArgs := make([]interface{}, len(hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs))
 	for i, deploymentCustomArg := range hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs {
