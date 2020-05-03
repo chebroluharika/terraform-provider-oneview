@@ -498,7 +498,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	d.Set("created", hypCP.Created)
 	d.Set("description", hypCP.Description.String())
 	d.Set("e_tag", hypCP.ETag)
-	hypCPCS_list := make([]map[string]interface{}, 0, 1)
+/*	hypCPCS_list := make([]map[string]interface{}, 0, 1)
 	hypCPCS_list = append(hypCPCS_list, map[string]interface{}{
 		"distributed_switch_version": hypCP.HypervisorClusterSettings.DistributedSwitchVersion,
 		"distributed_switch_usage":   hypCP.HypervisorClusterSettings.DistributedSwitchUsage,
@@ -509,7 +509,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		"virtual_switch_type":        hypCP.HypervisorClusterSettings.VirtualSwitchType,
 	})
 
-	d.Set("hypervisor_cluster_settings", hypCPCS_list)
+*///	d.Set("hypervisor_cluster_settings", hypCPCS_list)
 
 	d.Set("hypervisor_cluster_uri", hypCP.HypervisorClusterUri)
 /*	deploymentCustomArgs := make([]interface{}, len(hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs))
@@ -658,6 +658,9 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	d.Set("type", hypCP.Type)
 	d.Set("uri", hypCP.URI)
 
+	//uri := d.Get("uri").(string)
+	//_, id := path.Split(uri)
+	//d.SetId(id)
 	return nil
 
 }

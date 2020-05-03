@@ -302,7 +302,7 @@ func dataSourceHypervisorClusterProfile() *schema.Resource {
 
 			"name": {
 				Type:     schema.TypeString,
-				Computed: true,
+				Required: true,
 			},
 
 			"path": {
