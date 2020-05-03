@@ -158,7 +158,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true},
 						"virtual_switch_config_policy": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -357,7 +357,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 
 			"uri": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 		},
 	}
@@ -391,8 +391,10 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		StateReason: d.Get("state_reason").(string),
 		Status:      d.Get("status").(string),
 		Type:        d.Get("type").(string),
-		URI:         utils.Nstring(d.Get("uri").(string)),
+		//URI:         utils.Nstring(d.Get("uri").(string)),
 	}
+	file0, _ := json.MarshalIndent(d, "", " ")
+	_ = ioutil.WriteFile("hpycp3.json", file0, 0644)
 	hypClusterSettings := ov.HypervisorClusterSettings{}
 	HypervisorClusterSettingslist := d.Get("hypervisor_cluster_settings").(*schema.Set).List()
 	for _, raw := range HypervisorClusterSettingslist {
@@ -468,12 +470,12 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 
 	}
 	hypCP.HypervisorHostProfileTemplate = &hypervisorProfileTemplate
-	file0, _ := json.MarshalIndent(hypCP, "", " ")
-	_ = ioutil.WriteFile("hpycp.json", file0, 0644)
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
-	uri := d.Get("URI").(string)
-	_, id := path.Split(uri)
-	d.SetId(id)
+	file0, _ = json.MarshalIndent(d.Get("uri"), "", " ")
+	_ = ioutil.WriteFile("hpycp2.json", file0, 0644)
+	//uri := d.Get("uri").(string)
+	//_, id := path.Split(uri)
+	d.SetId(d.Get("name").(string))
 	if hypCPError != nil {
 		d.SetId("")
 		return hypCPError
@@ -484,16 +486,15 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 
 func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	uri := d.Get("uri").(string)
-	_, id := path.Split(uri)
-	d.SetId(id)
-
-	hypCP, err := config.ovClient.GetHypervisorClusterProfileById(d.Id())
+	//d.SetId(id)
+	hypCP, err := config.ovClient.GetHypervisorClusterProfileByName(d.Id())
+	file0, _ := json.MarshalIndent(hypCP, "", " ")
+	_ = ioutil.WriteFile("hpycp1.json", file0, 0644)
 	if err != nil || hypCP.URI.IsNil() {
 		d.SetId("")
 		return nil
 	}
-	d.SetId(id)
+//	d.SetId()
 	addHostRequests := make([]interface{}, len(hypCP.AddHostRequests))
 	for i, addHostRequest := range hypCP.AddHostRequests {
 		addHostRequests[i] = addHostRequest
@@ -504,7 +505,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	d.Set("created", hypCP.Created)
 	d.Set("description", hypCP.Description.String())
 	d.Set("e_tag", hypCP.ETag)
-	hypCPCS_list := make([]map[string]interface{}, 0, 1)
+/*	hypCPCS_list := make([]map[string]interface{}, 0, 1)
 	hypCPCS_list = append(hypCPCS_list, map[string]interface{}{
 		"distributed_switch_version": hypCP.HypervisorClusterSettings.DistributedSwitchVersion,
 		"distributed_switch_usage":   hypCP.HypervisorClusterSettings.DistributedSwitchUsage,
@@ -516,9 +517,9 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	})
 
 	d.Set("hypervisor_cluster_settings", hypCPCS_list)
-
+*/
 	d.Set("hypervisor_cluster_uri", hypCP.HypervisorClusterUri)
-	deploymentCustomArgs := make([]interface{}, len(hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs))
+/*	deploymentCustomArgs := make([]interface{}, len(hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs))
 	for i, deploymentCustomArg := range hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs {
 		deploymentCustomArgs[i] = deploymentCustomArg.String()
 	}
@@ -545,12 +546,12 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		"manage_virtual_switches": hypCP.HypervisorHostProfileTemplate.VirtualSwitchConfigPolicy.ManageVirtualSwitches,
 	})
 
-	/**************** virtual switches*******************************/
+	 //###########################virtual switches###########################
 
 	virtualSwitches := make([]map[string]interface{}, 0, len(hypCP.HypervisorHostProfileTemplate.VirtualSwitches))
 	for _, virtualSwitch := range hypCP.HypervisorHostProfileTemplate.VirtualSwitches {
 
-		/***********virtualswicth port group*****************************/
+		//####################virtualswicth port group##########################
 
 		virtualSwitchPortGroups := make([]map[string]interface{}, 0, len(virtualSwitch.VirtualSwitchPortGroups))
 		for _, virtualSwitchPortGroup := range virtualSwitch.VirtualSwitchPortGroups {
@@ -558,7 +559,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 			for i, vspgnetworkUri := range virtualSwitchPortGroup.NetworkUris {
 				vspgnetworkUris[i] = vspgnetworkUri.String()
 			}
-			/***********vritual switch ports*********************/
+			//########################vritual switch ports####################################
 
 			virtualSwitchPorts := make([]map[string]interface{}, 0, len(virtualSwitchPortGroup.VirtualSwitchPorts))
 			for _, virtualSwitchPort := range virtualSwitchPortGroup.VirtualSwitchPorts {
@@ -574,7 +575,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 					"virtual_port_purpose": virtualPortPurposes,
 				})
 			}
-			/*************virtual switch ports ends********************/
+		//#########################virtual switch ports ends#############################
 			virtualSwitchPortGroups = append(virtualSwitchPortGroups, map[string]interface{}{
 				"action":               virtualSwitchPortGroup.Action,
 				"name":                 virtualSwitchPortGroup.Name,
@@ -584,9 +585,9 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 			})
 		}
 
-		/**********virtual switch port group ends*********/
+	          //#############################virtual switch port group ends##########################
 
-		/**********Virtual switch uplink***********/
+		//#########################Virtual switch uplink####################
 		virtualSwitchPortUplinks := make([]map[string]interface{}, 0, len(virtualSwitch.VirtualSwitchUplinks))
 		for _, virtualSwitchPortUplink := range virtualSwitch.VirtualSwitchUplinks {
 			virtualSwitchPortUplinks = append(virtualSwitchPortUplinks, map[string]interface{}{
@@ -598,7 +599,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 			})
 		}
 
-		/**********virtual switch upnlinks end************/
+		//#####################virtual switch upnlinks end#######################
 
 		networkUris := make([]interface{}, len(virtualSwitch.NetworkUris))
 		for i, networkUri := range virtualSwitch.NetworkUris {
@@ -617,7 +618,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 
 	}
 
-	/*****************virtual switch ends*************************************/
+	//#########################virtual switch ends############################
 
 	hypCPHHPT_list := make([]map[string]interface{}, 0, 1)
 	hypCPHHPT_list = append(hypCPHHPT_list, map[string]interface{}{
@@ -639,7 +640,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	_ = ioutil.WriteFile("virtualSwitches.json", file3, 0644)
 
 	d.Set("hypervisor_host_profile_template", hypCPHHPT_list)
-	d.Set("hypervisor_host_profile_uris", hypCP.HypervisorHostProfileUris)
+*/	d.Set("hypervisor_host_profile_uris", hypCP.HypervisorHostProfileUris)
 	d.Set("hypervisor_manager_uri", hypCP.HypervisorManagerUri)
 	d.Set("hypervisor_type", hypCP.HypervisorType)
 	ipPools := make([]interface{}, len(hypCP.IpPools))
@@ -694,7 +695,9 @@ func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interfa
 func resourceHypervisorClusterProfileDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	err := config.ovClient.DeleteHypervisorClusterProfile(d.Id())
+	uri := d.Get("uri").(string)
+	_, id := path.Split(uri)
+	err := config.ovClient.DeleteHypervisorClusterProfile(id)
 	if err != nil {
 		return err
 	}
