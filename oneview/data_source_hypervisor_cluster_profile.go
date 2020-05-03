@@ -13,9 +13,9 @@ package oneview
 
 import (
 	"github.com/hashicorp/terraform/helper/schema"
-	"path"
-        "encoding/json"
-        "io/ioutil"
+	//"path"
+    "encoding/json"
+    "io/ioutil"
 )
 
 func dataSourceHypervisorClusterProfile() *schema.Resource {
@@ -358,16 +358,16 @@ func dataSourceHypervisorClusterProfile() *schema.Resource {
 
 func datasourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	uri := d.Get("uri").(string)
-	_, id := path.Split(uri)
-	d.SetId(id)
+	//uri := d.Get("uri").(string)
+	//_, id := path.Split(uri)
+	//d.SetId(id)
 
-	hypCP, err := config.ovClient.GetHypervisorClusterProfileById(id)
+	hypCP, err := config.ovClient.GetHypervisorClusterProfileByName(d.Get("name").(string))
 	if err != nil || hypCP.URI.IsNil() {
 		d.SetId("")
 		return nil
 	}
-	d.SetId(id)
+	d.SetId(d.Get("name").(string))
 	addHostRequests := make([]interface{}, len(hypCP.AddHostRequests))
 	for i, addHostRequest := range hypCP.AddHostRequests {
 		addHostRequests[i] = addHostRequest
