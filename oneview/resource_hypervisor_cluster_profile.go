@@ -17,7 +17,7 @@ import (
 	"github.com/HewlettPackard/oneview-golang/utils"
 	"github.com/hashicorp/terraform/helper/schema"
 	"io/ioutil"
-	"path"
+//	"path"
 )
 
 func resourceHypervisorClusterProfile() *schema.Resource {
@@ -40,17 +40,17 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 
 			"category": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"compliance_state": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"created": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"description": {
@@ -60,7 +60,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 
 			"e_tag": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"hypervisor_cluster_settings": {
@@ -304,7 +304,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 
 			"modified": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"name": {
@@ -324,7 +324,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 
 			"scopes_uri": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"shared_storage_volumes": {
@@ -342,7 +342,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 
 			"state_reason": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"status": {
@@ -434,8 +434,6 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 				Name:                      rawDeploymentPlanItem["name"].(string),
 				ServerPassword:            rawDeploymentPlanItem["server_password"].(string),
 			}
-			file, _ := json.MarshalIndent(deploymentPlan, "", " ")
-			_ = ioutil.WriteFile("dp1.json", file, 0644)
 		}
 		/******************* deployment plan end********************/
 
@@ -450,8 +448,6 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 				CustomVirtualSwitches: rawVirtualSwitchConfigPolicyItem["custom_virtual_switches"].(bool),
 				ManageVirtualSwitches: rawVirtualSwitchConfigPolicyItem["manage_virtual_switches"].(bool),
 			}
-			file, _ := json.MarshalIndent(virtualSwitchConfigPolicy, "", " ")
-			_ = ioutil.WriteFile("vscp.json", file, 0644)
 		}
 
 		/*****************switch config policy**************************/
@@ -462,14 +458,10 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			ServerProfileTemplateUri:  utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
 			VirtualSwitchConfigPolicy: &virtualSwitchConfigPolicy,
 		}
-		file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
-		_ = ioutil.WriteFile("hpt1.json", file1, 0644)
 
 	}
 	hypCP.HypervisorHostProfileTemplate = &hypervisorProfileTemplate
 	hypCPError := config.ovClient.CreateHypervisorClusterProfile(hypCP)
-	file0, _ = json.MarshalIndent(d.Get("uri"), "", " ")
-	_ = ioutil.WriteFile("hpycp2.json", file0, 0644)
 	d.SetId(d.Get("name").(string))
 	if hypCPError != nil {
 		d.SetId("")
@@ -482,8 +474,6 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 	hypCP, err := config.ovClient.GetHypervisorClusterProfileByName(d.Id())
-	file0, _ := json.MarshalIndent(hypCP, "", " ")
-	_ = ioutil.WriteFile("hpycp1.json", file0, 0644)
 	if err != nil || hypCP.URI.IsNil() {
 		d.SetId("")
 		return nil
@@ -498,7 +488,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	d.Set("created", hypCP.Created)
 	d.Set("description", hypCP.Description.String())
 	d.Set("e_tag", hypCP.ETag)
-/*	hypCPCS_list := make([]map[string]interface{}, 0, 1)
+	hypCPCS_list := make([]map[string]interface{}, 0, 1)
 	hypCPCS_list = append(hypCPCS_list, map[string]interface{}{
 		"distributed_switch_version": hypCP.HypervisorClusterSettings.DistributedSwitchVersion,
 		"distributed_switch_usage":   hypCP.HypervisorClusterSettings.DistributedSwitchUsage,
@@ -509,10 +499,10 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		"virtual_switch_type":        hypCP.HypervisorClusterSettings.VirtualSwitchType,
 	})
 
-*///	d.Set("hypervisor_cluster_settings", hypCPCS_list)
+	d.Set("hypervisor_cluster_settings", hypCPCS_list)
 
 	d.Set("hypervisor_cluster_uri", hypCP.HypervisorClusterUri)
-/*	deploymentCustomArgs := make([]interface{}, len(hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs))
+	deploymentCustomArgs := make([]interface{}, len(hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs))
 	for i, deploymentCustomArg := range hypCP.HypervisorHostProfileTemplate.DeploymentPlan.DeploymentCustomArgs {
 		deploymentCustomArgs[i] = deploymentCustomArg.String()
 	}
@@ -632,8 +622,10 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	file3, _ := json.MarshalIndent(virtualSwitches, "", " ")
 	_ = ioutil.WriteFile("virtualSwitches.json", file3, 0644)
 
+	file4, _ := json.MarshalIndent(hypCPHHPT_list, "", " ")
+	_ = ioutil.WriteFile("hycphhpt.json", file4, 0644)
 	d.Set("hypervisor_host_profile_template", hypCPHHPT_list)
-*/	d.Set("hypervisor_host_profile_uris", hypCP.HypervisorHostProfileUris)
+	d.Set("hypervisor_host_profile_uris", hypCP.HypervisorHostProfileUris)
 	d.Set("hypervisor_manager_uri", hypCP.HypervisorManagerUri)
 	d.Set("hypervisor_type", hypCP.HypervisorType)
 	ipPools := make([]interface{}, len(hypCP.IpPools))
@@ -657,10 +649,9 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	d.Set("status", hypCP.Status)
 	d.Set("type", hypCP.Type)
 	d.Set("uri", hypCP.URI)
+	file5, _ := json.MarshalIndent(hypCP, "", " ")
+	_ = ioutil.WriteFile("hycp.json", file5, 0644)
 
-	//uri := d.Get("uri").(string)
-	//_, id := path.Split(uri)
-	//d.SetId(id)
 	return nil
 
 }
@@ -674,14 +665,12 @@ func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interfa
 		ComplianceState: d.Get("compliance_state").(string),
 		Created:         d.Get("created").(string),
 		Description:     utils.Nstring(d.Get("description").(string)),
-		ETag:            d.Get("e_tag").(string),		
 		HypervisorClusterUri: d.Get("hypervisor_cluster_uri").(string),		
 		HypervisorHostProfileUris: utils.Nstring(d.Get("hypervisor_host_profile_uris").(string)),
 		HypervisorManagerUri:      utils.Nstring(d.Get("hypervisor_manager_uri").(string)),
 		HypervisorType:            d.Get("hypervisor_type").(string),
 		//IpPools:                   utils.Nstring(d.Get("ip_pools").(string)),
 		MgmtIpSettingsOverride: d.Get("mgmt_ip_settings_override").(string),
-		Modified:               d.Get("modified").(string),
 		Name:                   d.Get("name").(string),
 		Path:                   d.Get("path").(string),
 		RefreshState:           d.Get("refresh_state").(string),
@@ -693,8 +682,8 @@ func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interfa
 		Type:        d.Get("type").(string),
 		URI:        utils.Nstring(d.Get("uri").(string)),
 	}
-	file0, _ := json.MarshalIndent(hypCP, "", " ")
-	_ = ioutil.WriteFile("hpycp3.json", file0, 0644)
+//	file0, _ := json.MarshalIndent(hypCP, "", " ")
+//	_ = ioutil.WriteFile("hpycp3.json", file0, 0644)
 	hypClusterSettings := ov.HypervisorClusterSettings{}
 	HypervisorClusterSettingslist := d.Get("hypervisor_cluster_settings").(*schema.Set).List()
 	for _, raw := range HypervisorClusterSettingslist {
@@ -737,8 +726,8 @@ func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interfa
 				Name:                      rawDeploymentPlanItem["name"].(string),
 				ServerPassword:            rawDeploymentPlanItem["server_password"].(string),
 			}
-			file, _ := json.MarshalIndent(deploymentPlan, "", " ")
-			_ = ioutil.WriteFile("dp1.json", file, 0644)
+		//	file, _ := json.MarshalIndent(deploymentPlan, "", " ")
+		//	_ = ioutil.WriteFile("dp1.json", file, 0644)
 		}
 		/******************* deployment plan end********************/
 
@@ -753,8 +742,6 @@ func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interfa
 				CustomVirtualSwitches: rawVirtualSwitchConfigPolicyItem["custom_virtual_switches"].(bool),
 				ManageVirtualSwitches: rawVirtualSwitchConfigPolicyItem["manage_virtual_switches"].(bool),
 			}
-			file, _ := json.MarshalIndent(virtualSwitchConfigPolicy, "", " ")
-			_ = ioutil.WriteFile("vscp.json", file, 0644)
 		}
 
 		/*****************switch config policy**************************/
@@ -765,28 +752,26 @@ func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interfa
 			ServerProfileTemplateUri:  utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
 			VirtualSwitchConfigPolicy: &virtualSwitchConfigPolicy,
 		}
-		file1, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
-		_ = ioutil.WriteFile("hpt1.json", file1, 0644)
+		file6, _ := json.MarshalIndent(hypervisorProfileTemplate, "", " ")
+		_ = ioutil.WriteFile("hptu.json", file6, 0644)
 
 	}
+		file7, _ := json.MarshalIndent(hypCP, "", " ")
+		_ = ioutil.WriteFile("hycpu.json", file7, 0644)
 	hypCP.HypervisorHostProfileTemplate = &hypervisorProfileTemplate
 	hypCPError := config.ovClient.UpdateHypervisorClusterProfile(hypCP)
-	file0, _ = json.MarshalIndent(d.Get("uri"), "", " ")
-	_ = ioutil.WriteFile("hpycp2.json", file0, 0644)	
+	d.SetId(d.Get("name").(string))
 	if hypCPError != nil {
 		d.SetId("")
 		return hypCPError
 	}
 	return resourceHypervisorClusterProfileRead(d, meta)
-	
 }
 
 func resourceHypervisorClusterProfileDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	uri := d.Get("uri").(string)
-	_, id := path.Split(uri)
-	err := config.ovClient.DeleteHypervisorClusterProfile(id)
+	err := config.ovClient.DeleteHypervisorClusterProfile(d.Id())
 	if err != nil {
 		return err
 	}
