@@ -173,7 +173,36 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Type:     schema.TypeBool,
 										Optional: true},
 								}}},
-						"virtual_switches": {
+					}}},
+			"hypervisor_cluster_uri": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"virtual_switches": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"action": {
+							Type:     schema.TypeString,
+							Optional: true},
+						"name": {
+							Type:     schema.TypeString,
+							Optional: true},
+						"network_uris": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString},
+						},
+						"version": {
+							Type:     schema.TypeString,
+							Optional: true},
+
+						"virtual_switch_type": {
+							Type:     schema.TypeString,
+							Optional: true},
+						"virtual_switch_uplinks": {
 							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Resource{
@@ -181,97 +210,69 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 									"action": {
 										Type:     schema.TypeString,
 										Optional: true},
+									"active": {
+										Type:     schema.TypeBool,
+										Optional: true},
+									"mac": {
+										Type:     schema.TypeString,
+										Optional: true},
 									"name": {
 										Type:     schema.TypeString,
 										Optional: true},
-									"network_uris": {
+									"vmnic": {
+										Type:     schema.TypeString,
+										Optional: true},
+								},
+							},
+						},
+					},
+				}},
+			"virtual_switch_port_groups": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"action": {
+							Type:     schema.TypeString,
+							Optional: true},
+						"name": {
+							Type:     schema.TypeString,
+							Optional: true},
+						"network_uris": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString},
+						},
+						"virtual_switch_ports": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"action": {
+										Type:     schema.TypeString,
+										Optional: true},
+									"dhcp": {
+										Type:     schema.TypeBool,
+										Optional: true},
+									"ip_address": {
+										Type:     schema.TypeString,
+										Optional: true},
+									"subnet_mask": {
+										Type:     schema.TypeString,
+										Optional: true},
+									"virtual_port_purpose": {
 										Type:     schema.TypeList,
 										Optional: true,
 										Elem: &schema.Schema{
 											Type: schema.TypeString},
 									},
-									"version": {
-										Type:     schema.TypeString,
-										Optional: true},
-									"virtual_switch_port_groups": {
-										Type:     schema.TypeList,
-										Optional: true,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"action": {
-													Type:     schema.TypeString,
-													Optional: true},
-												"name": {
-													Type:     schema.TypeString,
-													Optional: true},
-												"network_uris": {
-													Type:     schema.TypeList,
-													Optional: true,
-													Elem: &schema.Schema{
-														Type: schema.TypeString},
-												},
-												"virtual_switch_ports": {
-													Type:     schema.TypeList,
-													Optional: true,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"action": {
-																Type:     schema.TypeString,
-																Optional: true},
-															"dhcp": {
-																Type:     schema.TypeBool,
-																Optional: true},
-															"ip_address": {
-																Type:     schema.TypeString,
-																Optional: true},
-															"subnet_mask": {
-																Type:     schema.TypeString,
-																Optional: true},
-															"virtual_port_purpose": {
-																Type:     schema.TypeList,
-																Optional: true,
-																Elem: &schema.Schema{
-																	Type: schema.TypeString},
-															},
-														},
-													}},
-												"vlan": {
-													Type:     schema.TypeString,
-													Optional: true},
-											}},
-									},
-									"virtual_switch_type": {
-										Type:     schema.TypeString,
-										Optional: true},
-									"virtual_switch_uplinks": {
-										Type:     schema.TypeList,
-										Optional: true,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"action": {
-													Type:     schema.TypeString,
-													Optional: true},
-												"active": {
-													Type:     schema.TypeBool,
-													Optional: true},
-												"mac": {
-													Type:     schema.TypeString,
-													Optional: true},
-												"name": {
-													Type:     schema.TypeString,
-													Optional: true},
-												"vmnic": {
-													Type:     schema.TypeString,
-													Optional: true},
-											},
-										},
-									},
 								},
 							}},
-					}}},
-			"hypervisor_cluster_uri": {
-				Type:     schema.TypeString,
-				Optional: true,
+						"vlan": {
+							Type:     schema.TypeString,
+							Optional: true},
+					}},
 			},
 
 			"hypervisor_host_profile_uris": {
@@ -417,25 +418,25 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 		//		deploymentPlan := ov.DeploymentPlan{}
 		//		virtualSwitchConfigPolicy := ov.VirtualSwitchConfigPolicy{}
 		/*		rawDeploymentPlan := rawHostProfileTemplateItem["deployment_plan"].(*schema.Set).List()
-		//		for _, raw2 := range rawDeploymentPlan {
-		//			rawDeploymentPlanItem := raw2.(map[string]interface{})
-		//			if val, ok := rawDeploymentPlanItem["deployment_custom_args"]; ok {
-						dpCustomArgsOrder := val.(*schema.Set).List()
-						dpCustomArgs := make([]utils.Nstring, len(dpCustomArgsOrder))
-						for i, rawCustomArgs := range dpCustomArgsOrder {
-							dpCustomArgs[i] = utils.Nstring(rawCustomArgs.(string))
-						}
+				//		for _, raw2 := range rawDeploymentPlan {
+				//			rawDeploymentPlanItem := raw2.(map[string]interface{})
+				//			if val, ok := rawDeploymentPlanItem["deployment_custom_args"]; ok {
+								dpCustomArgsOrder := val.(*schema.Set).List()
+								dpCustomArgs := make([]utils.Nstring, len(dpCustomArgsOrder))
+								for i, rawCustomArgs := range dpCustomArgsOrder {
+									dpCustomArgs[i] = utils.Nstring(rawCustomArgs.(string))
+								}
 
-						deploymentPlan.DeploymentCustomArgs = dpCustomArgs
-					}
-					deploymentPlan = ov.DeploymentPlan{
-						DeploymentPlanDescription: rawDeploymentPlanItem["deployment_plan_description"].(string),
-						DeploymentPlanUri:         utils.Nstring(rawDeploymentPlanItem["deployment_plan_uri"].(string)),
-						Name:                      rawDeploymentPlanItem["name"].(string),
-						ServerPassword:            rawDeploymentPlanItem["server_password"].(string),
-					}
-				}
-				/******************* deployment plan end********************/
+								deploymentPlan.DeploymentCustomArgs = dpCustomArgs
+							}
+							deploymentPlan = ov.DeploymentPlan{
+								DeploymentPlanDescription: rawDeploymentPlanItem["deployment_plan_description"].(string),
+								DeploymentPlanUri:         utils.Nstring(rawDeploymentPlanItem["deployment_plan_uri"].(string)),
+								Name:                      rawDeploymentPlanItem["name"].(string),
+								ServerPassword:            rawDeploymentPlanItem["server_password"].(string),
+							}
+						}
+						/******************* deployment plan end********************/
 
 		/*****************switch config policy**************************/
 		/*		rawVirtualSwitchConfigPolicy := rawHostProfileTemplateItem["virtual_switch_config_policy"].(*schema.Set).List()
