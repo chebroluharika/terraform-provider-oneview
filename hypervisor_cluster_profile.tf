@@ -17,7 +17,7 @@ resource "oneview_hypervisor_cluster_profile" "HypervisorClusterProfile"{
     "name"="Cluster7",
     "description"="",
     "hypervisor_type"="Vmware",
-    "hypervisor_manager_uri"="/rest/hypervisor-managers/063055b5-4703-4b0c-8aea-60b23c2de157",
+    "hypervisor_manager_uri"="/rest/hypervisor-managers/c6ef2d7a-e84a-4749-96e2-1bbc59543fce",
     "path"="DC2",
     "hypervisor_cluster_settings"={  
                                   "type"="Vmware",
@@ -28,10 +28,6 @@ resource "oneview_hypervisor_cluster_profile" "HypervisorClusterProfile"{
                                },
     "hypervisor_host_profile_template"={  
     "server_profile_template_uri"="/rest/server-profile-templates/278cadfb-2e86-4a05-8932-972553518259",
-     "deployment_plan"={  
-     "deployment_plan_uri"="",
-     "server_password"="",
-      }
      "host_prefix"="Test-Cluster-host"
      },
 }
