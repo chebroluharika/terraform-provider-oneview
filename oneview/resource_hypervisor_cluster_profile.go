@@ -174,7 +174,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Optional: true},
 								}}},
 						"virtual_switches": {
-							Type:     schema.TypeList,
+							Type:     schema.TypeSet,
 							Optional: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -194,7 +194,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true},
 									"virtual_switch_port_groups": {
-										Type:     schema.TypeList,
+										Type:     schema.TypeSet,
 										Optional: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
@@ -211,7 +211,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 														Type: schema.TypeString},
 												},
 												"virtual_switch_ports": {
-													Type:     schema.TypeList,
+													Type:     schema.TypeSet,
 													Optional: true,
 													Elem: &schema.Resource{
 														Schema: map[string]*schema.Schema{
@@ -244,7 +244,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true},
 									"virtual_switch_uplinks": {
-										Type:     schema.TypeList,
+										Type:     schema.TypeSet,
 										Optional: true,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
