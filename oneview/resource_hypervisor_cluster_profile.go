@@ -515,11 +515,12 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		"name":                        hypCP.HypervisorHostProfileTemplate.DeploymentPlan.Name,
 		"server_password":             hypCP.HypervisorHostProfileTemplate.DeploymentPlan.ServerPassword,
 	})
-	hostConfigPolicylist := make([]map[string]interface{}, 0, 1)
+	hostConfigPolicylist := make([]map[string]interface{}, 0, len(hypCP.HypervisorHostProfileTemplate.HostConfigPolicy))
+	for _, hostConfigPolicy= range hypCP.HypervisorHostProfileTemplate.HostConfigPolicy
 	hostConfigPolicylist = append(hostConfigPolicylist, map[string]interface{}{
-		"leave_host_in_maintenance":   hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.LeaveHostInMaintenance,
-		"use_host_prefix_as_hostname": hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.LeaveHostInMaintenance,
-		"use_hostname_to_register":    hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.UseHostnameToRegister,
+		"leave_host_in_maintenance":   hostConfigPolicy.LeaveHostInMaintenance,
+		"use_host_prefix_as_hostname": hostConfigPolicy.LeaveHostInMaintenance,
+		"use_hostname_to_register":    hostConfigPolicy.UseHostnameToRegister,
 	})
 
 	virtualSwitchConfigPolicylist := make([]map[string]interface{}, 0, 1)
