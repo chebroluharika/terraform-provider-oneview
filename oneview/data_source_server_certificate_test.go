@@ -16,25 +16,25 @@ import (
 	"testing"
 )
 
-func TestAccHypervisorManager_2(t *testing.T) {
+func TestAccServerCertificate_2(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccHypervisorManagerData,
+				Config: testAccServerCertificateData,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("oneview_hypervisor_manager.test", "type", "HypervisorManagerV2"),
-					resource.TestCheckResourceAttr("oneview_hypervisor_manager.test", "name", "TestHypervisorManager"),
+					resource.TestCheckResourceAttr("oneview_server_certificate.test", "type", "CertificateInfoV2"),
+					resource.TestCheckResourceAttr("oneview_server_certificate.test", "alias_name", "TestServerCertificate"),
 				),
 			},
 		},
 	})
 }
 
-var testAccHypervisorManagerData = `
-  data "oneview_hypervisor_manager" "test" {
-    type = "HypervisorManagerV2"		  
-    name = "TestHypervisorManager"
+var testAccServerCertificateData = `
+  data "oneview_server_certificate" "test" {
+    type = "CertificateInfoV2"		  
+    alias_name = "TestServerCertificate"
   }`

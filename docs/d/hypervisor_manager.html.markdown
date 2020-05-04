@@ -12,7 +12,7 @@ Use this data source to access the attributes of a hypervisor manager.
 
 ## Example Usage
 
-```hcl
+```
 data "oneview_hypervisor_manager" "test" {
  name = "Test hypervisor manager"
 }
@@ -24,7 +24,7 @@ output "oneview_hypervisor_manager_value" {
 
 ## Argument Reference
 
-* `uri` - (Required) The name of the hypervisor manager.
+* `name` -  Host name or IP of this hypervisor manager.
 
 ## Attributes Reference
 
@@ -39,8 +39,6 @@ output "oneview_hypervisor_manager_value" {
 * `e_tag` -  Entity tag/version ID of the resource, the same value that is returned in the ETag header on a GET of the resource.
 
 * `hypervisor_type` -  Hypervisor type which can be Vmware or HyperV.
-
-* `name` -  Host name or IP of this hypervisor manager.
 
 * `password` -   Password that can be used to authenticate with this hypervisor manager.
 
@@ -62,3 +60,4 @@ output "oneview_hypervisor_manager_value" {
 
 * `uri` - The URI of the resource.
 
+* `username` - (Required) The username to  authenticate the hypervisor manager.

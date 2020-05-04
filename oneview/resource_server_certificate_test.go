@@ -20,26 +20,26 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-func TestAccHypervisorManager_1(t *testing.T) {
-	var hypervisorManager ov.HypervisorManager
+func TestAccServerCertificate_1(t *testing.T) {
+	var serverCertificate ov.ServerCertificate
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckHypervisorManagerDestroy,
+		CheckDestroy: testAccCheckServerCertificateDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccHypervisorManager,
+				Config: testAccServerCertificate,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckHypervisorManagerExists(
-						"oneview_hypervisor_manager.test", &hypervisorManager),
+					testAccCheckServerCertificateExists(
+						"oneview_server_certificate.test", &serverCertificate),
 					resource.TestCheckResourceAttr(
-						"oneview_hypervisor_manager.test", "name", "Terraform Hypervisor Manager1",
+						"oneview_server_certificate.test", "alias_name", "Terraform Server Certificate1",
 					),
 				),
 			},
 			{
-				ResourceName:      testAccHypervisorManager,
+				ResourceName:      testAccServerCertificate,
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
@@ -47,7 +47,7 @@ func TestAccHypervisorManager_1(t *testing.T) {
 	})
 }
 
-func testAccCheckHypervisorManagerExists(n string, hypervisorManager *ov.HypervisorManager) resource.TestCheckFunc {
+func testAccCheckServerCertificateExists(n string, serverCertificate *ov.ServerCertificate) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -63,36 +63,36 @@ func testAccCheckHypervisorManagerExists(n string, hypervisorManager *ov.Hypervi
 			return err
 		}
 
-		testHypervisorManager, err := config.ovClient.GetHypervisorManagerByName(rs.Primary.ID)
+		testServerCertificate, err := config.ovClient.GetServerCertificateByName(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
-		if testHypervisorManager.Name != rs.Primary.ID {
+		if testServerCertificate.Name != rs.Primary.ID {
 			return fmt.Errorf("Instance not found")
 		}
-		*hypervisorManager = testHypervisorManager
+		*serverCertificate = testServerCertificate
 		return nil
 	}
 }
 
-func testAccCheckHypervisorManagerDestroy(s *terraform.State) error {
+func testAccCheckServerCertificateDestroy(s *terraform.State) error {
 	config := testAccProvider.Meta().(*Config)
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "oneview_hypervisor_manager" {
+		if rs.Type != "oneview_server_certificate" {
 			continue
 		}
 
-		testHypervisorManager, _ := config.ovClient.GetHypervisorManagerByName(rs.Primary.ID)
+		testServerCertificate, _ := config.ovClient.GetServerCertificateByName(rs.Primary.ID)
 
-		if testHypervisorManager.Name != "" {
-			return fmt.Errorf("HypervisorManager still exists")
+		if testServerCertificate.Name != "" {
+			return fmt.Errorf("ServerCertificate still exists")
 		}
 	}
 
 	return nil
 }
 
-var testAccHypervisorManager = `resource "oneview_hypervisor_manager" "test" {
+var testAccServerCertificate = `resource "oneview_server_certificate" "test" {
   count = 1
-  name = "Terraform Hypervisor Manager1"
+  alias_name = "Terraform Server Certificate1"
 }`
