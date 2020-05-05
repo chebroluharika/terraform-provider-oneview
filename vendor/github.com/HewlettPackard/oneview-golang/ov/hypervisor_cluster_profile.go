@@ -39,8 +39,8 @@ type HypervisorClusterProfile struct {
 type HypervisorClusterSettings struct {
 	DistributedSwitchUsage   string `json:"distributedSwitchUsage,omitempty"`   //"distributedSwitchUsage":"null"
 	DistributedSwitchVersion string `json:"distributedSwitchVersion,omitempty"` //"distributedSwitchVersion":"null"
-	DrsEnabled               bool   `json:"drsEnabled,omitempty"`               //"drsEnabled":"true"
-	HaEnabled                bool   `json:"haEnabled,omitempty"`                //"haEnabled":"false"
+	DrsEnabled               bool   `json:"drsEnabled"`               //"drsEnabled":"true"
+	HaEnabled                bool   `json:"haEnabled"`                //"haEnabled":"false"
 	MultiNicVMotion          bool   `json:"multiNicVMotion"`                    //"multiNicVMotion":"false"
 	Type                     string `json:"type,omitempty"`                     //"type":"Vmware"
 	VirtualSwitchType        string `json:"virtualSwitchType,omitempty"`        //"virtualSwitchType":"Standard"
@@ -65,14 +65,14 @@ type DeploymentPlan struct {
 }
 
 type HostConfigPolicy struct {
-	LeaveHostInMaintenance  bool `json:"leaveHostInMaintenance,omitempty"`  //"leaveHostInMaintenance":"false"
-	UseHostPrefixAsHostname bool `json:"useHostPrefixAsHostname,omitempty"` //"useHostPrefixAsHostname":"false"
-	UseHostnameToRegister   bool `json:"useHostnameToRegister,omitempty"`   //"useHostnameToRegister":"false"
+	LeaveHostInMaintenance  bool `json:"leaveHostInMaintenance"`  //"leaveHostInMaintenance":"false"
+	UseHostPrefixAsHostname bool `json:"useHostPrefixAsHostname"` //"useHostPrefixAsHostname":"false"
+	UseHostnameToRegister   bool `json:"useHostnameToRegister"`   //"useHostnameToRegister":"false"
 }
 type VirtualSwitchConfigPolicy struct {
-	ConfigurePortGroups   bool `json:"configurePortGroups,omitempty"`   //"configurePortGroups":"true"
-	CustomVirtualSwitches bool `json:"customVirtualSwitches,omitempty"` //"customVirtualSwitches":"false"
-	ManageVirtualSwitches bool `json:"manageVirtualSwitches,omitempty"` //"manageVirtualSwitches":"true"
+	ConfigurePortGroups   bool `json:"configurePortGroups"`   //"configurePortGroups":"true"
+	CustomVirtualSwitches bool `json:"customVirtualSwitches"` //"customVirtualSwitches":"false"
+	ManageVirtualSwitches bool `json:"manageVirtualSwitches"` //"manageVirtualSwitches":"true"
 }
 type VirtualSwitches struct {
 	Action                  string                    `json:"action,omitempty"`                  //"action":"NONE"
@@ -305,7 +305,7 @@ func (c *OVClient) CreateVirtualSwitchLayout(virtualswitchlayout VirtualSwitchLa
 	return nil
 }
 
-func (c *OVClient) DeleteHypervisorClusterProfile(id string) error {
+func (c *OVClient) DeleteHypervisorClusterProfile(name string) error {
 	var (
 		hyClustProf HypervisorClusterProfile
 		err         error
@@ -313,7 +313,7 @@ func (c *OVClient) DeleteHypervisorClusterProfile(id string) error {
 		uri         string
 	)
 
-	hyClustProf, err = c.GetHypervisorClusterProfileById(id)
+	hyClustProf, err = c.GetHypervisorClusterProfileByName(name)
 	if err != nil {
 		return err
 	}
@@ -347,7 +347,7 @@ func (c *OVClient) DeleteHypervisorClusterProfile(id string) error {
 		}
 		return nil
 	} else {
-		log.Infof("HypervisorClusterProfile could not be found to delete, %s, skipping delete ...", id)
+		log.Infof("HypervisorClusterProfile could not be found to delete, %s, skipping delete ...", name)
 	}
 	return nil
 }

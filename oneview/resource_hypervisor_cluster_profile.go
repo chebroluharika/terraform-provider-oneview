@@ -695,8 +695,8 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		"use_hostname_to_register":    hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.UseHostnameToRegister,
 	})
 
-	file99, _ := json.MarshalIndent(hypCP, "", " ")
-	_ = ioutil.WriteFile("vscpl.json", file99, 0644)
+	file99, _ := json.MarshalIndent(hostConfigPolicylist , "", " ")
+	_ = ioutil.WriteFile("hspl1.json", file99, 0644)
 	virtualSwitchConfigPolicylist := make([]map[string]interface{}, 0, 1)
 	virtualSwitchConfigPolicylist = append(virtualSwitchConfigPolicylist, map[string]interface{}{
 		"configure_port_group":    hypCP.HypervisorHostProfileTemplate.VirtualSwitchConfigPolicy.ConfigurePortGroups,
@@ -707,11 +707,11 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 	hypCPHHPT_list := make([]map[string]interface{}, 0, 1)
 	hypCPHHPT_list = append(hypCPHHPT_list, map[string]interface{}{
 		"deployment_manager_type":      hypCP.HypervisorHostProfileTemplate.DeploymentManagerType,
-		"deployment_plan":              dplist,
+	//	"deployment_plan":              dplist,
 		"host_config_policy":           hostConfigPolicylist,
 		"host_prefix":                  hypCP.HypervisorHostProfileTemplate.Hostprefix,
 		"server_profile_template_uri":  hypCP.HypervisorHostProfileTemplate.ServerProfileTemplateUri.String(),
-		"virtual_switch_config_policy": virtualSwitchConfigPolicylist,
+	//	"virtual_switch_config_policy": virtualSwitchConfigPolicylist,
 	})
 	d.Set("hypervisor_host_profile_template", hypCPHHPT_list)
 
@@ -743,7 +743,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		}
 		//########################vritual switch ports####################################
 
-		virtualSwitchPorts := make([]map[string]interface{}, 0, len(virtualSwitch.VirtualSwitchPortGroups.VirtualSwitchPorts))
+		virtualSwitchPorts := make([]map[string]interface{}, 0, len(virtualSwitchPortGroup.VirtualSwitchPorts))
 		for _, virtualSwitchPort := range virtualSwitchPortGroup.VirtualSwitchPorts {
 			virtualPortPurposes := make([]interface{}, len(virtualSwitchPort.VirtualPortPurpose))
 			for i, virtualPortPurpose := range virtualSwitchPort.VirtualPortPurpose {
