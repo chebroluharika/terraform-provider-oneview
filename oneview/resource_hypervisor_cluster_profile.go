@@ -225,26 +225,7 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 								},
 							},
 						},
-					},
-				}},
-			"virtual_switch_port_groups": {
-				Type:     schema.TypeSet,
-				Optional: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"action": {
-							Type:     schema.TypeString,
-							Optional: true},
-						"name": {
-							Type:     schema.TypeString,
-							Optional: true},
-						"network_uris": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString},
-						},
-						"virtual_switch_ports": {
+						"virtual_switch_port_groups": {
 							Type:     schema.TypeSet,
 							Optional: true,
 							Elem: &schema.Resource{
@@ -252,28 +233,47 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 									"action": {
 										Type:     schema.TypeString,
 										Optional: true},
-									"dhcp": {
-										Type:     schema.TypeBool,
-										Optional: true},
-									"ip_address": {
+									"name": {
 										Type:     schema.TypeString,
 										Optional: true},
-									"subnet_mask": {
-										Type:     schema.TypeString,
-										Optional: true},
-									"virtual_port_purpose": {
+									"network_uris": {
 										Type:     schema.TypeSet,
 										Optional: true,
 										Elem: &schema.Schema{
 											Type: schema.TypeString},
 									},
-								},
-							}},
-						"vlan": {
-							Type:     schema.TypeString,
-							Optional: true},
-					}},
-			},
+									"virtual_switch_ports": {
+										Type:     schema.TypeSet,
+										Optional: true,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"action": {
+													Type:     schema.TypeString,
+													Optional: true},
+												"dhcp": {
+													Type:     schema.TypeBool,
+													Optional: true},
+												"ip_address": {
+													Type:     schema.TypeString,
+													Optional: true},
+												"subnet_mask": {
+													Type:     schema.TypeString,
+													Optional: true},
+												"virtual_port_purpose": {
+													Type:     schema.TypeSet,
+													Optional: true,
+													Elem: &schema.Schema{
+														Type: schema.TypeString},
+												},
+											},
+										}},
+									"vlan": {
+										Type:     schema.TypeString,
+										Optional: true},
+								}},
+						},
+					},
+				}},
 
 			"hypervisor_host_profile_uris": {
 				Type:     schema.TypeString,
@@ -437,69 +437,14 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	hypCP.HypervisorClusterSettings = &hypClusterSettings
 	/*********************Hypervisor cluster settings ends***********************/
 
-	/****************virtual port groups***********************************/
-
-	rawVirtualSwitchPortGroups := d.Get("virtual_switch_port_groups").(*schema.Set).List()
-	virtualSwitchPortGroupsCollect := make([]ov.VirtualSwitchPortGroups, 0)
-	virtualSwitchPortGroups := ov.VirtualSwitchPortGroups{}
-	virtualSwitchPorts := ov.VirtualSwitchPorts{}
-
-	for _, raw3 := range rawVirtualSwitchPortGroups {
-
-		rawVirtualSwitchPortGroupsItem := raw3.(map[string]interface{})
-		/*********************virtual switch port group networkUris start***********************/
-		//if val, ok := d.GetOk("initial_scope_uris"); ok {
-
-		rawNetworkUris := rawVirtualSwitchPortGroupsItem["network_uris"].(*schema.Set).List()
-		networkUris := make([]utils.Nstring, len(rawNetworkUris))
-		for i, raw_nw := range rawNetworkUris {
-			networkUris[i] = utils.Nstring(raw_nw.(string))
-		}
-		
-		/******************virtual switch port groups network uris end*************************/
-		/*************virtual switch ports start******************************************/
-	//	if val, ok := d.GetOk("initial_scope_uris"); ok {
-
-		rawVirtualSwitchPorts := rawVirtualSwitchPortGroupsItem["virtual_switch_ports"].(*schema.Set).List()
-		virtualSwitchPortsCollect := make([]ov.VirtualSwitchPorts, 0)
-
-		for _, raw4 := range rawVirtualSwitchPorts {
-			rawVirtualSwitchPortsItem := raw4.(map[string]interface{})
-			/*********************virtual switch port purpose start***********************/
-		rawVirtualPortPurpose := rawVirtualSwitchPortsItem["virtual_port_purpose"].(*schema.Set).List()
-		virtualPortPurpose := make([]utils.Nstring, len(rawVirtualPortPurpose))
-		for i, raw_pp := range rawVirtualPortPurpose {
-			virtualPortPurpose[i] = utils.Nstring(raw_pp.(string))
-		}
-		
-		/******************virtual switch port purpose end*************************/
-			virtualSwitchPorts = ov.VirtualSwitchPorts{
-				Action:     rawVirtualSwitchPortsItem["action"].(string),
-				Dhcp:       rawVirtualSwitchPortsItem["dhcp"].(bool),
-				IpAddress:  rawVirtualSwitchPortsItem["ip_address"].(string),
-				SubnetMask: rawVirtualSwitchPortsItem["name"].(string),
-				VirtualPortPurpose:  virtualPortPurpose ,
-			}
-			virtualSwitchPortsCollect = append(virtualSwitchPortsCollect, virtualSwitchPorts)
-		}
-		/***************virtual switch ports ends***************************/
-
-		virtualSwitchPortGroups = ov.VirtualSwitchPortGroups{
-			Action:             rawVirtualSwitchPortGroupsItem["action"].(string),
-			Name:               rawVirtualSwitchPortGroupsItem["name"].(string),
-			NetworkUris:        networkUris,
-			VirtualSwitchPorts: virtualSwitchPortsCollect,
-			Vlan:               rawVirtualSwitchPortGroupsItem["vlan"].(string),
-		}
-		virtualSwitchPortGroupsCollect = append(virtualSwitchPortGroupsCollect, virtualSwitchPortGroups)
-	}
-	/****************virtual port groups  ends***********************************/
+	
 
 	/*****************************virtual switch********************************/
 
 	rawVirtualSwitches := d.Get("virtual_switches").(*schema.Set).List()
 	virtualSwitchesCollect := make([]ov.VirtualSwitches, 0)
 	virtualSwitches := ov.VirtualSwitches{}
+	virtualSwitchUplinks := ov.VirtualSwitchUplinks{}
 
 	for _, raw1 := range rawVirtualSwitches {
 
@@ -533,6 +478,63 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			virtualSwitchUplinksCollect = append(virtualSwitchUplinksCollect, virtualSwitchUplinks)
 		}
 		/***************virtual switch uplinks ends***************************/
+		/****************virtual port groups***********************************/
+
+	rawVirtualSwitchPortGroups := rawVirtualSwitchesItem["virtual_switch_port_groups"].(*schema.Set).List()
+	virtualSwitchPortGroupsCollect := make([]ov.VirtualSwitchPortGroups, 0)
+	virtualSwitchPortGroups := ov.VirtualSwitchPortGroups{}
+	virtualSwitchPorts := ov.VirtualSwitchPorts{}
+
+	for _, raw3 := range rawVirtualSwitchPortGroups {
+
+		rawVirtualSwitchPortGroupsItem := raw3.(map[string]interface{})
+		/*********************virtual switch port group networkUris start***********************/
+		//if val, ok := d.GetOk("initial_scope_uris"); ok {
+
+		rawNetworkUris := rawVirtualSwitchPortGroupsItem["network_uris"].(*schema.Set).List()
+		networkUris := make([]utils.Nstring, len(rawNetworkUris))
+		for i, raw_nw := range rawNetworkUris {
+			networkUris[i] = utils.Nstring(raw_nw.(string))
+		}
+
+		/******************virtual switch port groups network uris end*************************/
+		/*************virtual switch ports start******************************************/
+		//	if val, ok := d.GetOk("initial_scope_uris"); ok {
+
+		rawVirtualSwitchPorts := rawVirtualSwitchPortGroupsItem["virtual_switch_ports"].(*schema.Set).List()
+		virtualSwitchPortsCollect := make([]ov.VirtualSwitchPorts, 0)
+
+		for _, raw4 := range rawVirtualSwitchPorts {
+			rawVirtualSwitchPortsItem := raw4.(map[string]interface{})
+			/*********************virtual switch port purpose start***********************/
+			rawVirtualPortPurpose := rawVirtualSwitchPortsItem["virtual_port_purpose"].(*schema.Set).List()
+			virtualPortPurpose := make([]utils.Nstring, len(rawVirtualPortPurpose))
+			for i, raw_pp := range rawVirtualPortPurpose {
+				virtualPortPurpose[i] = utils.Nstring(raw_pp.(string))
+			}
+
+			/******************virtual switch port purpose end*************************/
+			virtualSwitchPorts = ov.VirtualSwitchPorts{
+				Action:             rawVirtualSwitchPortsItem["action"].(string),
+				Dhcp:               rawVirtualSwitchPortsItem["dhcp"].(bool),
+				IpAddress:          rawVirtualSwitchPortsItem["ip_address"].(string),
+				SubnetMask:         rawVirtualSwitchPortsItem["name"].(string),
+				VirtualPortPurpose: virtualPortPurpose,
+			}
+			virtualSwitchPortsCollect = append(virtualSwitchPortsCollect, virtualSwitchPorts)
+		}
+		/***************virtual switch ports ends***************************/
+
+		virtualSwitchPortGroups = ov.VirtualSwitchPortGroups{
+			Action:             rawVirtualSwitchPortGroupsItem["action"].(string),
+			Name:               rawVirtualSwitchPortGroupsItem["name"].(string),
+			NetworkUris:        networkUris,
+			VirtualSwitchPorts: virtualSwitchPortsCollect,
+			Vlan:               rawVirtualSwitchPortGroupsItem["vlan"].(string),
+		}
+		virtualSwitchPortGroupsCollect = append(virtualSwitchPortGroupsCollect, virtualSwitchPortGroups)
+	}
+	/****************virtual port groups  ends***********************************/
 		virtualSwitches = ov.VirtualSwitches{
 			Action:                  rawVirtualSwitchesItem["action"].(string),
 			Name:                    rawVirtualSwitchesItem["name"].(string),
@@ -608,7 +610,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			hostConfigPolicy = ov.HostConfigPolicy{
 				LeaveHostInMaintenance:  rawHostConfigPolicyItem["leave_host_in_maintenance"].(bool),
 				UseHostPrefixAsHostname: rawHostConfigPolicyItem["use_host_prefix_as_hostname"].(bool),
-				UseHostnameToRegisters:  rawHostConfigPolicyItem["use_hostname_to_register"].(bool),
+				UseHostnameToRegister:   rawHostConfigPolicyItem["use_hostname_to_register"].(bool),
 			}
 		}
 
@@ -621,7 +623,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			ServerProfileTemplateUri:  utils.Nstring(rawHostProfileTemplateItem["server_profile_template_uri"].(string)),
 			VirtualSwitchConfigPolicy: &virtualSwitchConfigPolicy,
 			HostConfigPolicy:          &hostConfigPolicy,
-			VirtualSwitch:             virtualSwitchesCollect,
+			VirtualSwitches:           virtualSwitchesCollect,
 		}
 
 	}
@@ -731,29 +733,9 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		}
 
 		//#####################virtual switch upnlinks end#######################
+		//####################virtualswicth port group##########################
 
-		networkUris := make([]interface{}, len(virtualSwitch.NetworkUris))
-		for i, networkUri := range virtualSwitch.NetworkUris {
-			networkUris[i] = networkUri
-		}
-
-		virtualSwitches = append(virtualSwitches, map[string]interface{}{
-			"action":       virtualSwitch.Action,
-			"name":         virtualSwitch.Name,
-			"network_uris": networkUris,
-			"version":      virtualSwitch.Version,
-			//"virtual_switch_port_groups": virtualSwitchPortGroups,
-			"virtual_switch_type":    virtualSwitch.VirtualSwitchType,
-			"virtual_switch_uplinks": virtualSwitchPortUplinks,
-		})
-
-	}
-	d.Set("virtual_switches", virtualSwitches)
-	//#########################virtual switch ends############################
-
-	//####################virtualswicth port group##########################
-
-	virtualSwitchPortGroups := make([]map[string]interface{}, 0, len(hypCP.HypervisorHostProfileTemplate.VirtualSwitches.VirtualSwitchPortGroups))
+	virtualSwitchPortGroups := make([]map[string]interface{}, 0, len(virtualSwitch.VirtualSwitchPortGroups))
 	for _, virtualSwitchPortGroup := range virtualSwitch.VirtualSwitchPortGroups {
 		vspgnetworkUris := make([]interface{}, len(virtualSwitchPortGroup.NetworkUris))
 		for i, vspgnetworkUri := range virtualSwitchPortGroup.NetworkUris {
@@ -761,7 +743,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		}
 		//########################vritual switch ports####################################
 
-		virtualSwitchPorts := make([]map[string]interface{}, 0, len(hypCP.HypervisorHostProfileTemplate.VirtualSwitches.VirtualSwitchPortGroups.VirtualSwitchPorts))
+		virtualSwitchPorts := make([]map[string]interface{}, 0, len(virtualSwitch.VirtualSwitchPortGroups.VirtualSwitchPorts))
 		for _, virtualSwitchPort := range virtualSwitchPortGroup.VirtualSwitchPorts {
 			virtualPortPurposes := make([]interface{}, len(virtualSwitchPort.VirtualPortPurpose))
 			for i, virtualPortPurpose := range virtualSwitchPort.VirtualPortPurpose {
@@ -784,9 +766,30 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 			"vlan":                 virtualSwitchPortGroup.Vlan,
 		})
 	}
-	d.Set("virtual_switch_port_groups", virtualSwitchPortGroups)
+
 	//#############################virtual switch port group ends##########################
 
+
+		networkUris := make([]interface{}, len(virtualSwitch.NetworkUris))
+		for i, networkUri := range virtualSwitch.NetworkUris {
+			networkUris[i] = networkUri
+		}
+
+		virtualSwitches = append(virtualSwitches, map[string]interface{}{
+			"action":       virtualSwitch.Action,
+			"name":         virtualSwitch.Name,
+			"network_uris": networkUris,
+			"version":      virtualSwitch.Version,
+			"virtual_switch_port_groups": virtualSwitchPortGroups,
+			"virtual_switch_type":    virtualSwitch.VirtualSwitchType,
+			"virtual_switch_uplinks": virtualSwitchPortUplinks,
+		})
+
+	}
+	d.Set("virtual_switches", virtualSwitches)
+	//#########################virtual switch ends############################
+
+	
 	file, _ := json.MarshalIndent(dplist, "", " ")
 	_ = ioutil.WriteFile("dp.json", file, 0644)
 	file1, _ := json.MarshalIndent(hostConfigPolicylist, "", " ")
