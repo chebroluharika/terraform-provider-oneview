@@ -15,7 +15,7 @@ data "oneview_scope" "scope_obj" {
 resource "oneview_hypervisor_cluster_profile" "HypervisorClusterProfile"{  
     "type"="HypervisorClusterProfileV3",
     "name"="Cluster7",
-    "description"="",
+    "description"="asa",
     "hypervisor_type"="Vmware",
     "hypervisor_manager_uri"="/rest/hypervisor-managers/c6ef2d7a-e84a-4749-96e2-1bbc59543fce",
     "path"="DC2",
@@ -28,6 +28,42 @@ resource "oneview_hypervisor_cluster_profile" "HypervisorClusterProfile"{
                                },
     "hypervisor_host_profile_template"={  
     "server_profile_template_uri"="/rest/server-profile-templates/278cadfb-2e86-4a05-8932-972553518259",
-     "host_prefix"="Test-Cluster-host"
+    "host_prefix"="Cluster7",
+
+     "host_config_policy"= {
+            "leave_host_in_maintenance"= false,
+            "use_hostname_to_register"= false
+        },
+        "virtual_switch_config_policy"= {
+            "manage_virtual_switches"= true,
+            "configure_port_groups"= true,
+        },
      },
+"virtual_switches"=[{
+        "name"="mgmt",
+        "virtual_switch_type"="Standard",
+
+        "virtual_switch_port_groups"=[{
+            "name"="mgmt",
+            "network_uris"=["/rest/ethernet-networks/7a9d7631-20fa-4f3a-b6f6-10c89998b904"],
+            "vlan"="0",
+            "virtual_switch_ports"=[{
+                "virtual_port_purpose"=["Management"],
+                "dhcp"=false,
+                "action"="NONE"
+              }],
+            "action"="NONE"
+          }],
+        "virtual_switch_uplinks"=[{
+            "name"="Mezz 3:1-c",
+            "active"=false,
+            "action"="NONE"
+          }],
+        "action"="NONE",
+        "network_uris"=["/rest/ethernet-networks/7a9d7631-20fa-4f3a-b6f6-10c89998b904"]
+      }],
 }
+
+
+
+
