@@ -136,43 +136,44 @@ func resourceHypervisorClusterProfile() *schema.Resource {
 										Type:     schema.TypeString,
 										Optional: true},
 								}}},
-						"host_config_policy": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"leave_host_in_maintenance": {
-										Type:     schema.TypeBool,
-										Optional: true},
-									"use_host_prefix_as_hostname": {
-										Type:     schema.TypeBool,
-										Optional: true},
-									"use_hostname_to_register": {
-										Type:     schema.TypeBool,
-										Optional: true},
-								}}},
+
 						"host_prefix": {
 							Type:     schema.TypeString,
 							Optional: true},
 						"server_profile_template_uri": {
 							Type:     schema.TypeString,
 							Optional: true},
-						"virtual_switch_config_policy": {
-							Type:     schema.TypeSet,
-							Optional: true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
+					}}},
+			"host_config_policy": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"leave_host_in_maintenance": {
+							Type:     schema.TypeBool,
+							Optional: true},
+						"use_host_prefix_as_hostname": {
+							Type:     schema.TypeBool,
+							Optional: true},
+						"use_hostname_to_register": {
+							Type:     schema.TypeBool,
+							Optional: true},
+					}}},
+			"virtual_switch_config_policy": {
+				Type:     schema.TypeSet,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
 
-									"configure_port_groups": {
-										Type:     schema.TypeBool,
-										Optional: true},
-									"custom_virtual_switches": {
-										Type:     schema.TypeBool,
-										Optional: true},
-									"manage_virtual_switches": {
-										Type:     schema.TypeBool,
-										Optional: true},
-								}}},
+						"configure_port_groups": {
+							Type:     schema.TypeBool,
+							Optional: true},
+						"custom_virtual_switches": {
+							Type:     schema.TypeBool,
+							Optional: true},
+						"manage_virtual_switches": {
+							Type:     schema.TypeBool,
+							Optional: true},
 					}}},
 			"hypervisor_cluster_uri": {
 				Type:     schema.TypeString,
@@ -553,6 +554,37 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	file88, _ := json.MarshalIndent(virtualSwitchesCollect, "", " ")
 	_ = ioutil.WriteFile("ws.json", file88, 0644)
 	/*************virtual switch ends******************************/
+	/*****************switch config policy**************************/
+	virtualSwitchConfigPolicy := ov.VirtualSwitchConfigPolicy{}
+
+	rawVirtualSwitchConfigPolicy := d.Get("virtual_switch_config_policy").(*schema.Set).List()
+
+	for _, raw_scp := range rawVirtualSwitchConfigPolicy {
+		rawVirtualSwitchConfigPolicyItem := raw_scp.(map[string]interface{})
+
+		virtualSwitchConfigPolicy = ov.VirtualSwitchConfigPolicy{
+			ConfigurePortGroups:   rawVirtualSwitchConfigPolicyItem["configure_port_groups"].(bool),
+			CustomVirtualSwitches: rawVirtualSwitchConfigPolicyItem["custom_virtual_switches"].(bool),
+			ManageVirtualSwitches: rawVirtualSwitchConfigPolicyItem["manage_virtual_switches"].(bool),
+		}
+	}
+
+	/*****************switch config policy ends**************************/
+	/*****************host config policy**************************/
+	hostConfigPolicy := ov.HostConfigPolicy{}
+	rawHostConfigPolicy := d.Get("host_config_policy").(*schema.Set).List()
+
+	for _, raw_hcp := range rawHostConfigPolicy {
+		rawHostConfigPolicyItem := raw_hcp.(map[string]interface{})
+
+		hostConfigPolicy = ov.HostConfigPolicy{
+			LeaveHostInMaintenance:  rawHostConfigPolicyItem["leave_host_in_maintenance"].(bool),
+			UseHostPrefixAsHostname: rawHostConfigPolicyItem["use_host_prefix_as_hostname"].(bool),
+			UseHostnameToRegister:   rawHostConfigPolicyItem["use_hostname_to_register"].(bool),
+		}
+	}
+
+	/*****************host config policy**************************/
 	/*********************Hypervisor Host Profile Template Start***********************/
 	rawHypervisorHostProfileTemplate := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
 	hypervisorProfileTemplate := ov.HypervisorHostProfileTemplate{}
@@ -560,8 +592,7 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 	for _, raw_ht := range rawHypervisorHostProfileTemplate {
 		rawHostProfileTemplateItem := raw_ht.(map[string]interface{})
 		deploymentPlan := ov.DeploymentPlan{}
-		virtualSwitchConfigPolicy := ov.VirtualSwitchConfigPolicy{}
-		hostConfigPolicy := ov.HostConfigPolicy{}
+
 		/******************* deployment plan start********************/
 		rawDeploymentPlan := rawHostProfileTemplateItem["deployment_plan"].(*schema.Set).List()
 
@@ -584,36 +615,6 @@ func resourceHypervisorClusterProfileCreate(d *schema.ResourceData, meta interfa
 			}
 		}
 		/******************* deployment plan end********************/
-
-		/*****************switch config policy**************************/
-		rawVirtualSwitchConfigPolicy := rawHostProfileTemplateItem["virtual_switch_config_policy"].(*schema.Set).List()
-
-		for _, raw_scp := range rawVirtualSwitchConfigPolicy {
-			rawVirtualSwitchConfigPolicyItem := raw_scp.(map[string]interface{})
-
-			virtualSwitchConfigPolicy = ov.VirtualSwitchConfigPolicy{
-				ConfigurePortGroups:   rawVirtualSwitchConfigPolicyItem["configure_port_groups"].(bool),
-				CustomVirtualSwitches: rawVirtualSwitchConfigPolicyItem["custom_virtual_switches"].(bool),
-				ManageVirtualSwitches: rawVirtualSwitchConfigPolicyItem["manage_virtual_switches"].(bool),
-			}
-		}
-
-		/*****************switch config policy ends**************************/
-		/*****************host config policy**************************/
-
-		rawHostConfigPolicy := rawHostProfileTemplateItem["host_config_policy"].(*schema.Set).List()
-
-		for _, raw_hcp := range rawHostConfigPolicy {
-			rawHostConfigPolicyItem := raw_hcp.(map[string]interface{})
-
-			hostConfigPolicy = ov.HostConfigPolicy{
-				LeaveHostInMaintenance:  rawHostConfigPolicyItem["leave_host_in_maintenance"].(bool),
-				UseHostPrefixAsHostname: rawHostConfigPolicyItem["use_host_prefix_as_hostname"].(bool),
-				UseHostnameToRegister:   rawHostConfigPolicyItem["use_hostname_to_register"].(bool),
-			}
-		}
-
-		/*****************host config policy**************************/
 
 		hypervisorProfileTemplate = ov.HypervisorHostProfileTemplate{
 			DeploymentManagerType:     rawHostProfileTemplateItem["deployment_manager_type"].(string),
@@ -695,6 +696,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		"use_host_prefix_as_hostname": hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.UseHostPrefixAsHostname,
 		"use_hostname_to_register":    hypCP.HypervisorHostProfileTemplate.HostConfigPolicy.UseHostnameToRegister,
 	})
+	d.Set("host_config_policy", hostConfigPolicylist)
 
 	file99, _ := json.MarshalIndent(hostConfigPolicylist, "", " ")
 	_ = ioutil.WriteFile("hspl1.json", file99, 0644)
@@ -704,12 +706,13 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		"custom_virtual_switches": hypCP.HypervisorHostProfileTemplate.VirtualSwitchConfigPolicy.CustomVirtualSwitches,
 		"manage_virtual_switches": hypCP.HypervisorHostProfileTemplate.VirtualSwitchConfigPolicy.ManageVirtualSwitches,
 	})
+	d.Set("virtual_switch_config_policy", virtualSwitchConfigPolicylist)
 
 	hypCPHHPT_list := make([]map[string]interface{}, 0, 1)
 	hypCPHHPT_list = append(hypCPHHPT_list, map[string]interface{}{
 		"deployment_manager_type": hypCP.HypervisorHostProfileTemplate.DeploymentManagerType,
-		//	"deployment_plan":              dplist,
-		"host_config_policy":          hostConfigPolicylist,
+		"deployment_plan":         dplist,
+		//"host_config_policy":          hostConfigPolicylist,
 		"host_prefix":                 hypCP.HypervisorHostProfileTemplate.Hostprefix,
 		"server_profile_template_uri": hypCP.HypervisorHostProfileTemplate.ServerProfileTemplateUri.String(),
 		//	"virtual_switch_config_policy": virtualSwitchConfigPolicylist,
@@ -789,7 +792,7 @@ func resourceHypervisorClusterProfileRead(d *schema.ResourceData, meta interface
 		})
 
 	}
-	//d.Set("virtual_switches", virtualSwitches)
+	d.Set("virtual_switches", virtualSwitches)
 	//#########################virtual switch ends############################
 
 	file, _ := json.MarshalIndent(dplist, "", " ")
@@ -876,42 +879,42 @@ func resourceHypervisorClusterProfileUpdate(d *schema.ResourceData, meta interfa
 	}
 	hypCP.HypervisorClusterSettings = &hypClusterSettings
 	rawHypervisorHostProfileTemplate := d.Get("hypervisor_host_profile_template").(*schema.Set).List()
-	file0, _ := json.MarshalIndent(rawHypervisorHostProfileTemplate , "", " ")
+	file0, _ := json.MarshalIndent(rawHypervisorHostProfileTemplate, "", " ")
 	_ = ioutil.WriteFile("hpycp8.json", file0, 0644)
 	hypervisorProfileTemplate := ov.HypervisorHostProfileTemplate{}
-/*
-			file, _ := json.MarshalIndent(deploymentPlan, "", " ")
-			_ = ioutil.WriteFile("dp1.json", file, 0644)
-	for _, raw := range rawHypervisorHostProfileTemplate {
-		/******************* deployment plan start********************#/
-		rawHostProfileTemplateItem := raw.(map[string]interface{})
-		deploymentPlan := ov.DeploymentPlan{}
-		virtualSwitchConfigPolicy := ov.VirtualSwitchConfigPolicy{}
-	       if rawHostProfileTemplateItem["deployment_plan"]!=nil { 
-		rawDeploymentPlan := rawHostProfileTemplateItem["deployment_plan"].(*schema.Set).List()
-		for _, raw2 := range rawDeploymentPlan {
-			rawDeploymentPlanItem := raw2.(map[string]interface{})
-			if  rawDeploymentPlanItem["deployment_custom_args"]!=nil{
-				dpCustomArgsOrder := rawDeploymentPlanItem["deployment_custom_args"].(*schema.Set).List()
-				dpCustomArgs := make([]utils.Nstring, len(dpCustomArgsOrder))
-				for i, rawCustomArgs := range dpCustomArgsOrder {
-					dpCustomArgs[i] = utils.Nstring(rawCustomArgs.(string))
+	/*
+				file, _ := json.MarshalIndent(deploymentPlan, "", " ")
+				_ = ioutil.WriteFile("dp1.json", file, 0644)
+		for _, raw := range rawHypervisorHostProfileTemplate {
+			/******************* deployment plan start********************#/
+			rawHostProfileTemplateItem := raw.(map[string]interface{})
+			deploymentPlan := ov.DeploymentPlan{}
+			virtualSwitchConfigPolicy := ov.VirtualSwitchConfigPolicy{}
+		       if rawHostProfileTemplateItem["deployment_plan"]!=nil {
+			rawDeploymentPlan := rawHostProfileTemplateItem["deployment_plan"].(*schema.Set).List()
+			for _, raw2 := range rawDeploymentPlan {
+				rawDeploymentPlanItem := raw2.(map[string]interface{})
+				if  rawDeploymentPlanItem["deployment_custom_args"]!=nil{
+					dpCustomArgsOrder := rawDeploymentPlanItem["deployment_custom_args"].(*schema.Set).List()
+					dpCustomArgs := make([]utils.Nstring, len(dpCustomArgsOrder))
+					for i, rawCustomArgs := range dpCustomArgsOrder {
+						dpCustomArgs[i] = utils.Nstring(rawCustomArgs.(string))
+					}
+
+					deploymentPlan.DeploymentCustomArgs = dpCustomArgs
 				}
+				deploymentPlan = ov.DeploymentPlan{
+					DeploymentPlanDescription: rawDeploymentPlanItem["deployment_plan_description"].(string),
+					DeploymentPlanUri:         utils.Nstring(rawDeploymentPlanItem["deployment_plan_uri"].(string)),
+					Name:                      rawDeploymentPlanItem["name"].(string),
+					ServerPassword:            rawDeploymentPlanItem["server_password"].(string),
+				}
+				file, _ := json.MarshalIndent(deploymentPlan, "", " ")
+				_ = ioutil.WriteFile("dp1.json", file, 0644)
+			}}
+			/******************* deployment plan end********************/
 
-				deploymentPlan.DeploymentCustomArgs = dpCustomArgs
-			}
-			deploymentPlan = ov.DeploymentPlan{
-				DeploymentPlanDescription: rawDeploymentPlanItem["deployment_plan_description"].(string),
-				DeploymentPlanUri:         utils.Nstring(rawDeploymentPlanItem["deployment_plan_uri"].(string)),
-				Name:                      rawDeploymentPlanItem["name"].(string),
-				ServerPassword:            rawDeploymentPlanItem["server_password"].(string),
-			}
-			file, _ := json.MarshalIndent(deploymentPlan, "", " ")
-			_ = ioutil.WriteFile("dp1.json", file, 0644)
-		}}
-		/******************* deployment plan end********************/
-
-		/*****************switch config policy**************************#/
+	/*****************switch config policy**************************#/
 		rawVirtualSwitchConfigPolicy := rawHostProfileTemplateItem["virtual_switch_config_policy"].(*schema.Set).List()
 
 		for _, raw3 := range rawVirtualSwitchConfigPolicy {
